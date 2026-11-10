@@ -1,0 +1,80 @@
+services:
+  # 실거래가 데이터 DB (raw / stg / map / mart / api 스키마)
+  postgres:
+    image: postgres:16
+    container_name: apt-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: Asia/Seoul
+    ports:
+      - "5433:5432"   # 로컬에 이미 PostgreSQL이 있어도 충돌하지 않게 5433 사용
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      retries: 10
+
+  # Airflow 메타데이터 DB (실행 이력). 데이터 DB와 분리해 둔다. 외부에 포트를 열지 않는다.
+  airflow-db:
+    image: postgres:16
+    container_name: apt-airflow-db
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      retries: 10
+
+  # Airflow: standalone 이 스케줄러, DAG 프로세서, API 서버(UI), 트리거러를 한 컨테이너에서 실행한다.
+  # 로컬 학습·포트폴리오용 구성이다. UI는 로그인 없이 열리므로 반드시 127.0.0.1 로만 노출한다.
+  airflow:
+    image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.4.0}
+    container_name: apt-airflow
+    command: ["airflow", "standalone"]
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      # 스케줄러와 API 서버가 같은 값을 써야 한다. 바꾸고 싶으면 .env 에 지정한다.
+      AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET:-local-dev-jwt-secret-please-change-0123456789abcdef}
+      AIRFLOW__API__SECRET_KEY: ${AIRFLOW_API_SECRET_KEY:-local-dev-api-secret-please-change-0123456789abcdef}
+      # 파이프라인(수집 스크립트, DAG)이 읽는 값
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATA_GO_KR_API_KEY: ${DATA_GO_KR_API_KEY}
+      APT_LAWD_CODES: ${APT_LAWD_CODES:-11215}
+      # 회사 네트워크 인증서 번들 경로 (예: /certs/ca-bundle.pem). 비워 두면 기본 검증을 쓴다.
+      APT_CA_BUNDLE: ${AIRFLOW_CA_BUNDLE:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags:ro
+      - ./ingest:/opt/airflow/ingest:ro
+      - ./db/sql:/opt/airflow/sql:ro
+      - ./certs:/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/v2/monitor/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+volumes:
+  pgdata:
+  airflow-db-data:
