@@ -122,6 +122,7 @@ function TrendTooltip({ active, payload, label }: TooltipContentProps) {
       ))}
       <div className="tt-note">
         거래 {p.tradeCnt}건 · 전월 대비 {formatPct(p.momChangePct)}
+        {p.bulkCnt > 0 && ` · 일괄 ${p.bulkCnt}건 제외`}
       </div>
     </div>
   );

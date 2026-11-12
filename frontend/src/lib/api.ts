@@ -13,6 +13,7 @@ export type MonthlyPrice = {
   momChangePct: number | null;
   ma3AvgPriceMan: number | null;
   currentMonth: boolean;
+  bulkCnt: number; // 집계에서 뺀 일괄 매각 건수 (가격·건수는 이를 제외한 시장 거래 기준)
 };
 
 export type PageResponse<T> = {
@@ -31,6 +32,7 @@ export type TrendPoint = {
   momChangePct: number | null;
   tradeCnt: number;
   currentMonth: boolean;
+  bulkCnt: number;
 };
 
 export type Trend = { sggCd: string; sggNm: string; points: TrendPoint[] };

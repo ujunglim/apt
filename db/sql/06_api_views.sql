@@ -2,7 +2,7 @@
 -- 뷰는 데이터를 저장하지 않으므로 마트가 갱신되면 바로 반영된다. 몇 번을 실행해도 안전하다.
 -- 실행: docker exec -i apt-postgres psql -U apt -d aptdb -v ON_ERROR_STOP=1 < db/sql/06_api_views.sql
 --
--- 가격 단위는 모두 만원이다. ym 은 'YYYY-MM' 문자열(차트 라벨용), deal_month 는 해당 월 1일(날짜).
+-- 가격 단위는 모두 만원이다. 모든 집계는 취소 거래와 일괄 매각(stg.is_bulk)을 제외한 시장 거래 기준이다. ym 은 'YYYY-MM' 문자열(차트 라벨용), deal_month 는 해당 월 1일(날짜).
 -- is_current_month 가 참인 달은 신고가 덜 들어와 값이 흔들릴 수 있다.
 
 CREATE SCHEMA IF NOT EXISTS api;
@@ -20,7 +20,8 @@ SELECT sgg_cd,
        mom_change_pct,
        ma3_avg_price_man,
        is_current_month,
-       refreshed_at
+       refreshed_at,
+       bulk_cnt          -- 집계에서 제외한 일괄 매각 건수 (뷰 컬럼은 끝에만 추가할 수 있어 마지막에 둔다)
 FROM mart.sgg_price_monthly;
 
 -- 법정동 월별 (시군구 안의 동별 비교)
@@ -37,7 +38,8 @@ SELECT sgg_cd,
        mom_change_pct,
        ma3_avg_price_man,
        is_current_month,
-       refreshed_at
+       refreshed_at,
+       bulk_cnt
 FROM mart.umd_price_monthly;
 
 -- 단지 월별 + 순위 (시군구 안의 단지 목록·순위). 거래 건수가 1~2건인 단지는 평균가가 거래 하나에 좌우되므로 trade_cnt 로 걸러서 쓴다.

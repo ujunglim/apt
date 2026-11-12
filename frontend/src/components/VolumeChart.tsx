@@ -84,6 +84,7 @@ function VolumeTooltip({ active, payload, label }: TooltipContentProps) {
         <strong>{p.tradeCnt}건</strong>
         <span className="tt-name">거래</span>
       </div>
+      {p.bulkCnt > 0 && <div className="tt-note">일괄 매각 {p.bulkCnt}건 제외</div>}
       {p.currentMonth && <div className="tt-note">집계 중 · 신고 기한(30일)이 지나야 확정</div>}
     </div>
   );

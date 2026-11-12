@@ -29,7 +29,8 @@ class RegionApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").isNumber())
                 .andExpect(jsonPath("$.content[0].ym").isString())
-                .andExpect(jsonPath("$.content[0].tradeCnt").isNumber());
+                .andExpect(jsonPath("$.content[0].tradeCnt").isNumber())
+                .andExpect(jsonPath("$.content[0].bulkCnt").isNumber());
     }
 
     @Test

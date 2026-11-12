@@ -59,6 +59,10 @@ public class SggPriceMonthly {
     @Column(name = "refreshed_at")
     private LocalDateTime refreshedAt;
 
+    /** 집계에서 제외한 일괄 매각 건수 (법인·공공기관의 같은 단지·같은 날 5건 이상 매수). */
+    @Column(name = "bulk_cnt")
+    private Integer bulkCnt;
+
     protected SggPriceMonthly() {
     }
 
@@ -81,4 +85,5 @@ public class SggPriceMonthly {
     public Integer getMa3AvgPriceMan() { return ma3AvgPriceMan; }
     public boolean isCurrentMonth() { return currentMonth; }
     public LocalDateTime getRefreshedAt() { return refreshedAt; }
+    public Integer getBulkCnt() { return bulkCnt; }
 }

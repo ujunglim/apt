@@ -68,12 +68,12 @@ def _check_raw() -> None:
 
 
 def _check_mart() -> None:
-    """마트 점검: 건수 대사는 실패, 매핑 누락·건수 급감은 경고."""
+    """마트 점검: 건수 대사는 실패, 매핑 누락·건수 급감·일괄 매각 발견은 경고."""
     with closing(_connect()) as conn, conn.cursor() as cur:
         cur.execute(
             """
             SELECT (SELECT count(*) FROM stg.apt_trade
-                     WHERE NOT is_canceled AND deal_date IS NOT NULL AND sgg_cd IS NOT NULL),
+                     WHERE NOT is_canceled AND NOT is_bulk AND deal_date IS NOT NULL AND sgg_cd IS NOT NULL),
                    (SELECT COALESCE(sum(trade_cnt), 0) FROM mart.sgg_price_monthly),
                    (SELECT COALESCE(sum(trade_cnt), 0) FROM mart.umd_price_monthly),
                    (SELECT COALESCE(sum(trade_cnt), 0) FROM mart.apt_price_monthly)
@@ -106,12 +106,29 @@ def _check_mart() -> None:
         for sgg_cd, trade_cnt in cur.fetchall():
             recent.setdefault(sgg_cd, []).append(trade_cnt)
 
+        # 일괄 매각(법인·공공기관의 같은 단지·같은 날 5건 이상 매수)은 마트에서 제외된다. 무엇이 빠졌는지 남긴다.
+        cur.execute(
+            """
+            SELECT sgg_cd, apt_nm, deal_date, count(*)
+              FROM stg.apt_trade
+             WHERE NOT is_canceled AND is_bulk
+             GROUP BY 1, 2, 3
+             ORDER BY 4 DESC
+            """
+        )
+        bulk_groups = cur.fetchall()
+
     if unmapped:
         log.warning("map.sgg_code 에 없는 시군구 코드: %s (매핑 테이블에 추가 필요)", unmapped)
     for sgg_cd, (latest, *rest) in recent.items():
         if rest and rest[0] > 0 and latest < rest[0] * VOLUME_DROP_WARN_RATIO:
             log.warning("%s: 최근 완결 월 거래 %s건이 직전 월 %s건의 %d%% 미만 (신고 지연 가능)",
                         sgg_cd, latest, rest[0], int(VOLUME_DROP_WARN_RATIO * 100))
+
+    if bulk_groups:
+        log.warning("일괄 매각 %d건(%d묶음)을 마트 집계에서 제외: %s",
+                    sum(g[3] for g in bulk_groups), len(bulk_groups),
+                    ", ".join(f"{g[0]} {g[1]} {g[2]} {g[3]}건" for g in bulk_groups[:10]))
 
     if not (stg_cnt == sgg_cnt == umd_cnt == apt_cnt):
         raise ValueError(

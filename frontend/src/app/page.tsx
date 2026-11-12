@@ -25,7 +25,7 @@ export default function Page({ searchParams }: PageProps<"/">) {
       <header className="header">
         <div>
           <h1>광진구 아파트 매매 실거래가</h1>
-          <p>국토교통부 실거래가 공개 데이터 · 매일 06:00 갱신 · 취소된 거래 제외</p>
+          <p>국토교통부 실거래가 공개 데이터 · 매일 06:00 갱신 · 취소·일괄 매각 제외</p>
         </div>
         <ThemeToggle />
       </header>
@@ -87,7 +87,7 @@ async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
       <div className="stack">
         <section className="card">
           <h2>월별 상세</h2>
-          <p className="sub">차트의 모든 값을 표로 확인할 수 있습니다. 집계 중인 달은 신고 기한(30일)이 지나야 확정됩니다.</p>
+          <p className="sub">차트의 모든 값을 표로 확인할 수 있습니다. 집계 중인 달은 신고 기한(30일)이 지나야 확정됩니다. 법인·공공기관의 일괄 매각은 시세를 왜곡해 제외합니다.</p>
           <PriceTable data={prices} hrefForPage={(p) => href({ page: p })} />
         </section>
         <section className="card">

@@ -9,7 +9,10 @@ public final class RegionDtos {
     private RegionDtos() {
     }
 
-    /** 시군구 월별 가격 한 행. currentMonth=true 인 달은 신고가 덜 들어와 값이 흔들릴 수 있다. */
+    /**
+     * 시군구 월별 가격 한 행. currentMonth=true 인 달은 신고가 덜 들어와 값이 흔들릴 수 있다.
+     * 가격·건수는 일괄 매각을 뺀 시장 거래 기준이고, 뺀 건수는 bulkCnt 로 따로 준다.
+     */
     public record MonthlyPrice(
             String ym,
             int tradeCnt,
@@ -18,11 +21,13 @@ public final class RegionDtos {
             BigDecimal avgPricePerM2Man,
             BigDecimal momChangePct,
             Integer ma3AvgPriceMan,
-            boolean currentMonth) {
+            boolean currentMonth,
+            int bulkCnt) {
 
         static MonthlyPrice from(SggPriceMonthly m) {
             return new MonthlyPrice(m.getYm(), m.getTradeCnt(), m.getAvgPriceMan(), m.getMedianPriceMan(),
-                    m.getAvgPricePerM2Man(), m.getMomChangePct(), m.getMa3AvgPriceMan(), m.isCurrentMonth());
+                    m.getAvgPricePerM2Man(), m.getMomChangePct(), m.getMa3AvgPriceMan(), m.isCurrentMonth(),
+                    bulkCntOf(m));
         }
     }
 
@@ -37,12 +42,17 @@ public final class RegionDtos {
             Integer medianPriceMan,
             BigDecimal momChangePct,
             int tradeCnt,
-            boolean currentMonth) {
+            boolean currentMonth,
+            int bulkCnt) {
 
         static TrendPoint from(SggPriceMonthly m) {
             return new TrendPoint(m.getYm(), m.getAvgPriceMan(), m.getMa3AvgPriceMan(), m.getMedianPriceMan(),
-                    m.getMomChangePct(), m.getTradeCnt(), m.isCurrentMonth());
+                    m.getMomChangePct(), m.getTradeCnt(), m.isCurrentMonth(), bulkCntOf(m));
         }
+    }
+
+    private static int bulkCntOf(SggPriceMonthly m) {
+        return m.getBulkCnt() == null ? 0 : m.getBulkCnt();
     }
 
     /** 최근 완결 월의 시군구 순위. ym 이 null 이면 아직 완결된 달이 없다. */

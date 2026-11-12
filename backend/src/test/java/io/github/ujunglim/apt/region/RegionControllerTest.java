@@ -39,7 +39,7 @@ class RegionControllerTest {
     @Test
     void prices_returnsPage() throws Exception {
         var row = new MonthlyPrice("2026-10", 42, 155717, 158500, new BigDecimal("1650.3"),
-                new BigDecimal("3.01"), 146539, false);
+                new BigDecimal("3.01"), 146539, false, 313);
         given(regionService.getPrices(eq("11215"), eq(YearMonth.of(2026, 1)), eq(YearMonth.of(2026, 10)), eq(0), eq(12)))
                 .willReturn(new PageResponse<>(List.of(row), 0, 12, 1, 1));
 
@@ -48,6 +48,7 @@ class RegionControllerTest {
                 .andExpect(jsonPath("$.content[0].ym").value("2026-10"))
                 .andExpect(jsonPath("$.content[0].avgPriceMan").value(155717))
                 .andExpect(jsonPath("$.content[0].currentMonth").value(false))
+                .andExpect(jsonPath("$.content[0].bulkCnt").value(313))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 

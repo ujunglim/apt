@@ -16,9 +16,9 @@ WHERE apt_seq IS NOT NULL
 GROUP BY apt_seq
 HAVING count(DISTINCT apt_nm) > 1;
 
-\echo '3) 건수 대사: 취소 제외 거래 수와 마트 합계가 같아야 한다'
+\echo '3) 건수 대사: 취소·일괄 매각 제외 거래 수와 마트 합계가 같아야 한다'
 SELECT (SELECT count(*) FROM stg.apt_trade
-         WHERE NOT is_canceled AND deal_date IS NOT NULL AND sgg_cd IS NOT NULL) AS stg_cnt,
+         WHERE NOT is_canceled AND NOT is_bulk AND deal_date IS NOT NULL AND sgg_cd IS NOT NULL) AS stg_cnt,
        (SELECT COALESCE(sum(trade_cnt), 0) FROM mart.sgg_price_monthly)           AS sgg_mart_cnt,
        (SELECT COALESCE(sum(trade_cnt), 0) FROM mart.umd_price_monthly)           AS umd_mart_cnt,
        (SELECT COALESCE(sum(trade_cnt), 0) FROM mart.apt_price_monthly)           AS apt_mart_cnt;
@@ -29,7 +29,23 @@ FROM (
     SELECT apt_seq, deal_date, floor, excl_use_ar, deal_amount_man,
            count(*) OVER (PARTITION BY apt_seq, deal_date, floor, excl_use_ar, deal_amount_man) AS cnt
     FROM stg.apt_trade
-    WHERE NOT is_canceled
+    WHERE NOT is_canceled AND NOT is_bulk
 ) t
 WHERE cnt > 1
 ORDER BY apt_seq, deal_date;
+
+\echo '5) 일괄 매각으로 분류된 거래 (법인·공공기관이 같은 단지를 같은 날 5건 이상 매수 → 마트에서 제외)'
+SELECT sgg_cd, apt_nm, deal_date, buyer_gbn, count(*) AS cnt,
+       min(deal_amount_man) AS min_price_man, max(deal_amount_man) AS max_price_man
+FROM stg.apt_trade
+WHERE NOT is_canceled AND is_bulk
+GROUP BY 1, 2, 3, 4
+ORDER BY cnt DESC;
+
+\echo '6) 일괄 기준 경계 확인: 같은 단지·같은 날 5건 이상인데 개인 매수라 시장 거래로 남긴 것'
+SELECT sgg_cd, apt_nm, deal_date, count(*) AS cnt
+FROM stg.apt_trade
+WHERE NOT is_canceled AND NOT is_bulk
+GROUP BY 1, 2, 3
+HAVING count(*) >= 5
+ORDER BY cnt DESC;

@@ -28,7 +28,10 @@ export default function PriceTable({ data, hrefForPage }: { data: PageResponse<M
                   {formatYm(r.ym)}
                   {r.currentMonth && <span className="badge">집계 중</span>}
                 </td>
-                <td>{r.tradeCnt}건</td>
+                <td>
+                  {r.tradeCnt}건
+                  {r.bulkCnt > 0 && <span className="badge" title="법인·공공기관이 같은 단지를 같은 날 5건 이상 매수한 거래. 시세를 왜곡해 집계에서 제외">일괄 {r.bulkCnt}건 제외</span>}
+                </td>
                 <td>{formatEok(r.avgPriceMan, 2)}</td>
                 <td>{formatEok(r.medianPriceMan, 2)}</td>
                 <td>{formatEok(r.ma3AvgPriceMan, 2)}</td>

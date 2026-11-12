@@ -2,7 +2,9 @@
 --   mart.sgg_price_monthly  시군구 x 월
 --   mart.umd_price_monthly  법정동 x 월
 --   mart.apt_price_monthly  단지 x 월 (표준 단지명, 순위)
--- 집계 대상은 취소되지 않은 거래만이다. 실행할 때마다 전체를 다시 만든다(TRUNCATE + INSERT).
+-- 집계 대상은 취소되지 않은 거래 중 일괄 매각(stg.is_bulk)이 아닌 시장 거래만이다.
+-- 시군구·법정동 마트에는 제외한 일괄 매각 건수(bulk_cnt)를 따로 남긴다.
+-- 실행할 때마다 전체를 다시 만든다(TRUNCATE + INSERT).
 -- 실행: docker exec -i apt-postgres psql -U apt -d aptdb -v ON_ERROR_STOP=1 < db/sql/04_mart.sql
 
 CREATE SCHEMA IF NOT EXISTS mart;
@@ -56,6 +58,10 @@ CREATE TABLE IF NOT EXISTS mart.apt_price_monthly (
     PRIMARY KEY (sgg_cd, apt_key, deal_month)
     );
 
+-- 일괄 매각 제외 건수 컬럼 (기존 테이블에도 추가되도록 ALTER 로 둔다)
+ALTER TABLE mart.sgg_price_monthly ADD COLUMN IF NOT EXISTS bulk_cnt INT NOT NULL DEFAULT 0;
+ALTER TABLE mart.umd_price_monthly ADD COLUMN IF NOT EXISTS bulk_cnt INT NOT NULL DEFAULT 0;
+
 BEGIN;
 
 TRUNCATE mart.sgg_price_monthly, mart.umd_price_monthly, mart.apt_price_monthly;
@@ -68,9 +74,16 @@ WITH base AS (
            excl_use_ar
     FROM stg.apt_trade
     WHERE NOT is_canceled
+      AND NOT is_bulk
       AND deal_date IS NOT NULL
       AND sgg_cd IS NOT NULL
 ),
+     bulk AS (
+         SELECT sgg_cd, date_trunc('month', deal_date)::date AS deal_month, count(*) AS bulk_cnt
+         FROM stg.apt_trade
+         WHERE NOT is_canceled AND is_bulk AND deal_date IS NOT NULL AND sgg_cd IS NOT NULL
+         GROUP BY 1, 2
+     ),
      agg AS (
          SELECT sgg_cd,
                 deal_month,
@@ -94,7 +107,7 @@ WITH base AS (
     )
 INSERT INTO mart.sgg_price_monthly
 (sgg_cd, sgg_nm, deal_month, trade_cnt, avg_price_man, median_price_man,
- avg_price_per_m2_man, mom_change_pct, ma3_avg_price_man, is_current_month)
+ avg_price_per_m2_man, mom_change_pct, ma3_avg_price_man, is_current_month, bulk_cnt)
 SELECT w.sgg_cd,
        m.sgg_nm,
        w.deal_month,
@@ -107,9 +120,11 @@ SELECT w.sgg_cd,
             THEN round((w.avg_price_man - w.prev_avg) * 100.0 / w.prev_avg, 2)
 END,
        w.ma3_avg_price_man,
-       (w.deal_month = date_trunc('month', current_date)::date)
+       (w.deal_month = date_trunc('month', current_date)::date),
+       COALESCE(b.bulk_cnt, 0)
 FROM win w
-LEFT JOIN map.sgg_code m ON m.sgg_cd = w.sgg_cd;
+LEFT JOIN map.sgg_code m ON m.sgg_cd = w.sgg_cd
+LEFT JOIN bulk b ON b.sgg_cd = w.sgg_cd AND b.deal_month = w.deal_month;
 
 -- 2) 법정동 x 월
 WITH base AS (
@@ -121,10 +136,17 @@ WITH base AS (
            excl_use_ar
     FROM stg.apt_trade
     WHERE NOT is_canceled
+      AND NOT is_bulk
       AND deal_date IS NOT NULL
       AND sgg_cd IS NOT NULL
       AND umd_cd IS NOT NULL
 ),
+     bulk AS (
+         SELECT sgg_cd, umd_cd, date_trunc('month', deal_date)::date AS deal_month, count(*) AS bulk_cnt
+         FROM stg.apt_trade
+         WHERE NOT is_canceled AND is_bulk AND deal_date IS NOT NULL AND sgg_cd IS NOT NULL AND umd_cd IS NOT NULL
+         GROUP BY 1, 2, 3
+     ),
      agg AS (
          SELECT sgg_cd,
                 umd_cd,
@@ -150,22 +172,24 @@ WITH base AS (
     )
 INSERT INTO mart.umd_price_monthly
 (sgg_cd, umd_cd, umd_nm, deal_month, trade_cnt, avg_price_man, median_price_man,
- avg_price_per_m2_man, mom_change_pct, ma3_avg_price_man, is_current_month)
-SELECT sgg_cd,
-       umd_cd,
-       umd_nm,
-       deal_month,
-       trade_cnt,
-       avg_price_man,
-       median_price_man,
-       avg_price_per_m2_man,
-       CASE WHEN prev_month = (deal_month - interval '1 month')::date
-                 AND prev_avg > 0
-            THEN round((avg_price_man - prev_avg) * 100.0 / prev_avg, 2)
+ avg_price_per_m2_man, mom_change_pct, ma3_avg_price_man, is_current_month, bulk_cnt)
+SELECT w.sgg_cd,
+       w.umd_cd,
+       w.umd_nm,
+       w.deal_month,
+       w.trade_cnt,
+       w.avg_price_man,
+       w.median_price_man,
+       w.avg_price_per_m2_man,
+       CASE WHEN w.prev_month = (w.deal_month - interval '1 month')::date
+                 AND w.prev_avg > 0
+            THEN round((w.avg_price_man - w.prev_avg) * 100.0 / w.prev_avg, 2)
 END,
-       ma3_avg_price_man,
-       (deal_month = date_trunc('month', current_date)::date)
-FROM win;
+       w.ma3_avg_price_man,
+       (w.deal_month = date_trunc('month', current_date)::date),
+       COALESCE(b.bulk_cnt, 0)
+FROM win w
+LEFT JOIN bulk b ON b.sgg_cd = w.sgg_cd AND b.umd_cd = w.umd_cd AND b.deal_month = w.deal_month;
 
 -- 3) 단지 x 월 (표준 단지명으로 묶고, 월별 순위를 붙인다)
 WITH base AS (
@@ -180,6 +204,7 @@ WITH base AS (
     FROM stg.apt_trade s
              LEFT JOIN map.apt_name m ON m.apt_seq = s.apt_seq
     WHERE NOT s.is_canceled
+      AND NOT s.is_bulk
       AND s.deal_date IS NOT NULL
       AND s.sgg_cd IS NOT NULL
       AND (s.apt_seq IS NOT NULL OR s.apt_nm IS NOT NULL)
