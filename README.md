@@ -97,7 +97,7 @@ ingest_<시군구코드> → check_raw → build_stg → build_map → build_mar
 ### 2. 기동
 
 ```bash
-colima start vzc          # (macOS + Colima) Docker VM 시작
+colima start vzc --memory 4   # (macOS + Colima) Docker VM 시작. 메모리는 최소 4GB
 docker-compose up -d      # postgres, airflow-db, airflow 기동
 docker-compose ps         # 상태 확인 (airflow가 healthy가 될 때까지 1~2분)
 ```
@@ -105,6 +105,8 @@ docker-compose ps         # 상태 확인 (airflow가 healthy가 될 때까지 1
 - Airflow UI: http://127.0.0.1:8080
 - 헬스체크: `GET /api/v2/monitor/health`
 - DAG를 처음 켜면 `catchup=False`여도 오늘 회차가 즉시 한 번 실행됩니다.
+- `airflow standalone`은 약 1.2GB를 사용합니다. VM 메모리가 2GB이면 DAG 실행 중 메모리 부족(OOM)으로 api-server(UI)가 종료되어 컨테이너가 unhealthy가 됩니다.
+  확인: `colima ssh -p vzc -- sh -c 'sudo dmesg | grep -i "killed process"'`
 
 ### 3. (선택) TLS 검사 프록시 환경
 
@@ -116,7 +118,21 @@ security find-certificate -a -p \
   /Library/Keychains/System.keychain > certs/ca-bundle.pem
 ```
 
-그다음 `.env`에 `AIRFLOW_CA_BUNDLE=/certs/ca-bundle.pem`을 지정합니다. 로컬에서 Python을 직접 실행할 때는 `truststore`가 macOS 키체인을 사용합니다.
+이 번들은 두 곳에서 사용합니다.
+
+| 위치 | 용도 | 설정 |
+|---|---|---|
+| Colima VM의 Docker 데몬 | 이미지 pull (`x509: certificate signed by unknown authority` 해결) | 아래 명령으로 VM 신뢰 저장소에 등록. `colima delete` 후에는 다시 등록 |
+| Airflow 컨테이너의 수집 스크립트 | data.go.kr 호출 | `.env`에 `AIRFLOW_CA_BUNDLE=/certs/ca-bundle.pem` |
+
+```bash
+colima ssh -p vzc -- sh -c "sudo install -m 644 '$PWD/certs/ca-bundle.pem' \
+  /usr/local/share/ca-certificates/apt-ca-bundle.crt && sudo update-ca-certificates && sudo systemctl restart docker"
+```
+
+컨테이너의 Python 3.13은 `VERIFY_X509_STRICT`를 기본으로 켜는데, 프록시 CA에 key usage 확장이 없으면 이 검사에서만 거절됩니다
+(`CA cert does not include key usage extension`). 수집 스크립트는 번들을 지정한 경우 이 플래그 하나만 끄고 체인·만료·호스트명 검증은 유지합니다.
+로컬에서 Python을 직접 실행할 때는 `truststore`가 macOS 키체인을 사용합니다.
 
 ### 4. 로컬에서 수동 실행 (Airflow 없이)
 
@@ -142,11 +158,13 @@ docker exec -i apt-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < db/sql/
 - [x] 수집 스크립트 (멱등 적재, 빈 응답 보호, 로그 마스킹)
 - [x] stg / map / mart / api 계층 SQL
 - [x] Airflow 3 DAG + docker-compose (가짜 API 서버로 7단계 전체 성공, 재실행 시 건수 불변 확인)
-- [ ] 실제 Docker 환경에서 첫 기동 점검
-  - [ ] 공식 Airflow 이미지 안에 `psycopg2`, `asyncpg`가 있는지
-  - [ ] 실제 data.go.kr API 호출
-  - [ ] 메타DB 비동기 연결 설정 필요 여부
-- [ ] `months=12`로 과거 12개월 백필
+- [x] 실제 Docker 환경에서 첫 기동 점검
+  - [x] 공식 Airflow 이미지에 `psycopg2` 2.9.13, `asyncpg` 0.32.0 포함 확인
+  - [x] 실제 data.go.kr API 호출 (TLS 검사 프록시 환경 대응 포함)
+  - [x] 메타DB는 `postgresql+psycopg2://` URL만으로 정상 동작
+  - [x] DAG 첫 회차 7단계 전체 성공
+- [x] `months=12`로 과거 12개월 백필 (2025-12 ~ 2026-11, 923건)
+  - 이틀 전 수집본 대비 원천에서 거래 2건이 빠진 것이 재수집으로 반영됨 → 최근 N개월 재수집 설계의 근거
 - [ ] **BE**: Spring Boot REST API (`api` 뷰 조회)
   - `GET /regions/{code}/prices?from=&to=`
   - `GET /regions/ranking`

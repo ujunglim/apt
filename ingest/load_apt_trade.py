@@ -10,6 +10,7 @@
 """
 import argparse
 import os
+import ssl
 import time
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -25,6 +26,7 @@ except ImportError:
 import psycopg2
 import requests
 from psycopg2.extras import execute_values
+from requests.adapters import HTTPAdapter
 
 try:
     from dotenv import load_dotenv
@@ -104,6 +106,32 @@ def parse_items(xml_text):
     for item in root.iter("item"):
         items.append({child.tag: (child.text or "").strip() for child in item})
     return code, total, items
+
+
+class _CABundleAdapter(HTTPAdapter):
+    """지정한 SSLContext 로 HTTPS 연결을 만드는 어댑터."""
+
+    def __init__(self, ssl_context, **kwargs):
+        self._ssl_context = ssl_context
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, *args, **kwargs):
+        kwargs["ssl_context"] = self._ssl_context
+        return super().init_poolmanager(*args, **kwargs)
+
+
+def build_session(ca_bundle=None):
+    """HTTP 세션. ca_bundle 이 있으면 그 번들로 검증한다 (TLS 검사 프록시 환경용, 컨테이너).
+
+    Python 3.13+ 는 VERIFY_X509_STRICT 를 기본으로 켜는데, 프록시 CA 중에는 key usage 확장이
+    없어 이 검사에서만 거절되는 경우가 있다. 그 플래그 하나만 끄고 체인·만료·호스트명 검증은 유지한다.
+    """
+    session = requests.Session()
+    if ca_bundle:
+        ctx = ssl.create_default_context(cafile=ca_bundle)
+        ctx.verify_flags &= ~getattr(ssl, "VERIFY_X509_STRICT", 0)
+        session.mount("https://", _CABundleAdapter(ctx))
+    return session
 
 
 def mask_secret(text, secret):
@@ -205,10 +233,7 @@ def main():
     months = [args.ym] if args.ym else recent_months(args.months)
     batch_id = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    session = requests.Session()
-    ca_bundle = os.getenv("APT_CA_BUNDLE")  # 사내 인증서 번들 경로 (컨테이너용, 없으면 기본값)
-    if ca_bundle:
-        session.verify = ca_bundle
+    session = build_session(os.getenv("APT_CA_BUNDLE"))
     conn = connect()
     skipped = []
     try:
