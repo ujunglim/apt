@@ -2,11 +2,11 @@
 
 국토교통부 공공데이터 API로 서울 광진구 아파트 매매 실거래가를 수집해
 **raw → stg → map → mart → api** 계층으로 적재하는 개인 포트폴리오 프로젝트입니다.
-Airflow 3 일 배치로 자동화하고, 이후 Spring Boot REST API와 Next.js 대시보드로 이어 갈 예정입니다.
+Airflow 3 일 배치로 자동화하고, Spring Boot REST API와 Next.js 대시보드로 보여 줍니다.
 
 ```
 data.go.kr API ──► raw ──► stg ──► map ──► mart ──► api(뷰) ──► Spring Boot ──► Next.js
-   (XML)          원본     타입정리   기준표    월 집계    BE용 계층      (예정)        (예정)
+   (XML)          원본     타입정리   기준표    월 집계    BE용 계층     REST API      대시보드
                      └──────────── Airflow 3 DAG (매일 06:00 KST) ────────────┘
 ```
 
@@ -19,7 +19,7 @@ data.go.kr API ──► raw ──► stg ──► map ──► mart ──�
 | 오케스트레이션 | Apache Airflow 3.4 (`airflow standalone`) |
 | 실행 환경 | Docker Compose (macOS + Colima) |
 | API (BE) | Spring Boot 4.1 (Java 21), Spring Data JPA, springdoc-openapi (Swagger) |
-| 예정 | Next.js + TypeScript |
+| 대시보드 (FE) | Next.js 16 (App Router, TypeScript), Recharts |
 
 ## 폴더 구조
 
@@ -29,6 +29,7 @@ apt/
 ├── .env                        환경변수 (git 제외)
 ├── certs/                      TLS 검사 프록시 환경용 CA 번들 (git 제외)
 ├── backend/                    Spring Boot REST API (api 뷰 조회, 포트 8081)
+├── frontend/                   Next.js 대시보드 (포트 3000)
 ├── dags/apt_trade_daily.py     일 배치 DAG
 ├── ingest/
 │   ├── load_apt_trade.py       API → raw.apt_trade 적재
@@ -182,6 +183,19 @@ TLS 검사 프록시 환경에서 Gradle이 의존성을 받을 때 `PKIX path b
 export JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStoreType=KeychainStore -Djavax.net.ssl.trustStore=NONE"
 ```
 
+## 대시보드 (frontend/)
+
+BE를 서버 컴포넌트에서 호출하는 Next.js 대시보드입니다. 자세한 내용은 [frontend/README.md](frontend/README.md)를 참고하세요.
+
+```bash
+cd frontend && npm install && npm run dev   # http://localhost:3000 (backend 실행 필요)
+```
+
+- 최근 완결 월 지표 4개, 가격 추이(평균가·3개월 이동평균·중위가), 거래 건수, 월별 표(페이징), 시군구 순위
+- 기간 필터(6개월·1년·전체)는 URL 쿼리로 동작해 링크 공유가 가능합니다.
+- 진행 중인 달은 표본이 적어 가격 차트에서 제외하고, 거래 건수와 표에서만 `집계 중`으로 표시합니다.
+- 라이트·다크 모드, 모바일 폭(390px) 대응
+
 ## 진행 상황
 
 - [x] 수집 스크립트 (멱등 적재, 빈 응답 보호, 로그 마스킹)
@@ -199,7 +213,7 @@ export JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStoreType=KeychainStore -Djavax.n
   - [x] 페이징, Problem Details 예외 처리, Swagger
   - [x] 테스트: 단위·웹 계층 12개, 실제 DB 통합 4개
   - [ ] API 전용 읽기 전용 DB 계정 (현재는 파이프라인과 같은 계정 사용)
-- [ ] **FE**: Next.js + TypeScript 대시보드 (차트)
+- [x] **FE**: Next.js + TypeScript 대시보드 (차트, 표, 기간 필터, 다크 모드)
 
 ## 데이터 출처
 
