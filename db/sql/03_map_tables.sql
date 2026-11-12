@@ -12,10 +12,15 @@ CREATE TABLE IF NOT EXISTS map.sgg_code (
                                             sgg_nm   TEXT NOT NULL
 );
 
--- 응답 샘플(sggCd=11215, estateAgentSggNm=서울 광진구)로 확인된 값만 넣는다.
+-- 실제 API 응답(sggCd, estateAgentSggNm, umdNm)으로 확인된 값만 넣는다.
 -- 다른 구를 수집할 때는 행정표준코드관리시스템(code.go.kr)에서 코드를 확인한 뒤 추가한다.
+--   11215 광진구 (2026-11-09 확인)
+--   11170 용산구 / 11710 송파구 / 11230 동대문구 (2026-11-12, 2026년 10월 응답으로 확인)
 INSERT INTO map.sgg_code (sgg_cd, sido_nm, sgg_nm)
-VALUES ('11215', '서울특별시', '광진구')
+VALUES ('11215', '서울특별시', '광진구'),
+       ('11170', '서울특별시', '용산구'),
+       ('11710', '서울특별시', '송파구'),
+       ('11230', '서울특별시', '동대문구')
     ON CONFLICT (sgg_cd) DO NOTHING;
 
 -- 2) 단지 코드(apt_seq) -> 표준 단지명

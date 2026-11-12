@@ -3,6 +3,7 @@ services:
   postgres:
     image: postgres:16
     container_name: apt-postgres
+    restart: unless-stopped   # Colima(Docker)가 켜지면 자동 시작. docker-compose stop 으로 끈 경우는 제외
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -22,6 +23,7 @@ services:
   airflow-db:
     image: postgres:16
     container_name: apt-airflow-db
+    restart: unless-stopped   # Colima(Docker)가 켜지면 자동 시작. docker-compose stop 으로 끈 경우는 제외
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -38,6 +40,7 @@ services:
   airflow:
     image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.4.0}
     container_name: apt-airflow
+    restart: unless-stopped   # Colima(Docker)가 켜지면 자동 시작. docker-compose stop 으로 끈 경우는 제외
     command: ["airflow", "standalone"]
     depends_on:
       airflow-db:
