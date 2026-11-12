@@ -18,7 +18,8 @@ data.go.kr API ──► raw ──► stg ──► map ──► mart ──�
 | 저장 | PostgreSQL 16 |
 | 오케스트레이션 | Apache Airflow 3.4 (`airflow standalone`) |
 | 실행 환경 | Docker Compose (macOS + Colima) |
-| 예정 | Spring Boot (Java), Next.js + TypeScript |
+| API (BE) | Spring Boot 4.1 (Java 21), Spring Data JPA, springdoc-openapi (Swagger) |
+| 예정 | Next.js + TypeScript |
 
 ## 폴더 구조
 
@@ -27,6 +28,7 @@ apt/
 ├── docker-compose.yml          postgres(데이터 DB, 호스트 5433) / airflow-db(메타DB) / airflow
 ├── .env                        환경변수 (git 제외)
 ├── certs/                      TLS 검사 프록시 환경용 CA 번들 (git 제외)
+├── backend/                    Spring Boot REST API (api 뷰 조회, 포트 8081)
 ├── dags/apt_trade_daily.py     일 배치 DAG
 ├── ingest/
 │   ├── load_apt_trade.py       API → raw.apt_trade 적재
@@ -153,6 +155,33 @@ done
 docker exec -i apt-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < db/sql/05_checks.sql
 ```
 
+## REST API (backend/)
+
+`api` 스키마의 뷰를 **읽기 전용**으로 조회합니다. 모든 가격 단위는 만원입니다.
+
+| 엔드포인트 | 읽는 뷰 | 설명 |
+|---|---|---|
+| `GET /regions/{code}/prices?from=YYYY-MM&to=YYYY-MM&page=0&size=12` | `api.v_sgg_price_monthly` | 시군구 월별 가격, 기간 필터(양 끝 포함), 페이징 |
+| `GET /regions/{code}/trend?months=12` | `api.v_sgg_price_monthly` | 최근 N개월 추이(평균가, 3개월 이동평균, 중위가) |
+| `GET /regions/ranking?sort=AVG_PRICE\|TRADE_CNT` | `api.v_sgg_ranking_latest` | 진행 중인 달을 제외한 최근 완결 월의 시군구 순위 |
+
+- **읽기 전용**: 엔티티는 `@Immutable`, 리포지토리는 쓰기 메서드가 없는 `Repository` 상속, 커넥션은 `read-only`입니다. `ddl-auto: none`이라 스키마는 `db/sql`만 관리합니다.
+- **오류 응답**: 잘못된 코드·월·범위는 400, 데이터가 없는 시군구는 404이며, 모두 RFC 9457 Problem Details(JSON)로 응답합니다.
+- **설정**: 루트 `.env`를 `spring.config.import`로 읽으므로 설정 파일에 비밀값이 없습니다.
+
+```bash
+cd backend
+./gradlew test              # 단위·웹 계층 테스트 (DB 불필요)
+./gradlew integrationTest   # 로컬 apt-postgres(5433)의 실제 뷰 조회 (docker-compose up 필요)
+./gradlew bootRun           # http://localhost:8081/swagger-ui.html
+```
+
+TLS 검사 프록시 환경에서 Gradle이 의존성을 받을 때 `PKIX path building failed`가 나면, 그 셸에서만 macOS 키체인을 신뢰 저장소로 지정합니다.
+
+```bash
+export JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStoreType=KeychainStore -Djavax.net.ssl.trustStore=NONE"
+```
+
 ## 진행 상황
 
 - [x] 수집 스크립트 (멱등 적재, 빈 응답 보호, 로그 마스킹)
@@ -165,11 +194,11 @@ docker exec -i apt-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < db/sql/
   - [x] DAG 첫 회차 7단계 전체 성공
 - [x] `months=12`로 과거 12개월 백필 (2025-12 ~ 2026-11, 923건)
   - 이틀 전 수집본 대비 원천에서 거래 2건이 빠진 것이 재수집으로 반영됨 → 최근 N개월 재수집 설계의 근거
-- [ ] **BE**: Spring Boot REST API (`api` 뷰 조회)
-  - `GET /regions/{code}/prices?from=&to=`
-  - `GET /regions/ranking`
-  - `GET /regions/{code}/trend`
-  - 페이징, 예외 처리, 기본 테스트, Swagger
+- [x] **BE**: Spring Boot REST API (`api` 뷰 조회)
+  - [x] `GET /regions/{code}/prices`, `GET /regions/{code}/trend`, `GET /regions/ranking`
+  - [x] 페이징, Problem Details 예외 처리, Swagger
+  - [x] 테스트: 단위·웹 계층 12개, 실제 DB 통합 4개
+  - [ ] API 전용 읽기 전용 DB 계정 (현재는 파이프라인과 같은 계정 사용)
 - [ ] **FE**: Next.js + TypeScript 대시보드 (차트)
 
 ## 데이터 출처
