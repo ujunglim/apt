@@ -12,7 +12,8 @@ npm run build && npm run start
 | 환경변수 | 기본값 | 설명 |
 |---|---|---|
 | `API_BASE_URL` | `http://localhost:8081` | backend 주소 (서버에서만 사용) |
-| `DATA_SOURCE` | (미설정 = `api`) | `static`이면 backend 대신 `data/dashboard.json` 스냅샷을 읽음 (Vercel 배포용) |
+| `DATA_SOURCE` | (미설정 = `api`) | `static`이면 backend 대신 JSON 스냅샷을 읽음 (Vercel 배포용) |
+| `DASHBOARD_DATA_URL` | (미설정) | static 모드에서 읽을 스냅샷 주소(Vercel Blob). 없으면 `data/dashboard.json`. 헤더 문구에 쓰여 빌드 전에 설정 |
 
 TLS 검사 프록시 환경에서 `npm install`이 인증서 오류를 내면 그 셸에서만 CA 번들을 지정합니다.
 
@@ -26,7 +27,7 @@ export NODE_EXTRA_CA_CERTS=../certs/ca-bundle.pem
 - `src/components/` — 지표 타일, 가격 추이(라인), 거래 건수(막대), 월별 표, 시군구 순위(가로 막대 + 표)
 - 지역(`?region=`)·기간(`?months=`)·표 페이지(`?page=`)는 URL 쿼리로 관리해 링크를 공유할 수 있습니다. 지역 목록은 순위 API에서 받아 수집 구를 늘리면 자동으로 나타납니다.
 - `src/lib/api.ts` — BE 응답 타입과 호출 (`server-only`), Problem Details 의 `detail`을 오류 메시지로 사용. `DATA_SOURCE=static`이면 같은 형식의 JSON 스냅샷에서 응답
-- `data/dashboard.json` — 정적 배포용 스냅샷 (`scripts/export_dashboard_data.py`가 생성)
+- `data/dashboard.json` — `DASHBOARD_DATA_URL`이 없을 때 쓰는 예비 스냅샷 (`scripts/export_dashboard_data.py`가 생성)
 - `src/app/error.tsx` — BE가 꺼져 있거나 오류일 때의 화면
 
 ## 차트 원칙

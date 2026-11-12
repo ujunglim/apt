@@ -7,7 +7,7 @@ import StatTiles from "@/components/StatTiles";
 import ThemeToggle from "@/components/ThemeToggle";
 import TrendChart from "@/components/TrendChart";
 import VolumeChart from "@/components/VolumeChart";
-import { getPrices, getRanking, getSnapshotTime, getTrend } from "@/lib/api";
+import { getPrices, getRanking, getSnapshotTime, getTrend, refreshLabel } from "@/lib/api";
 
 const DEFAULT_REGION = "11215"; // 광진구 (가장 먼저 수집한 구)
 const PERIODS = [
@@ -26,7 +26,7 @@ export default function Page({ searchParams }: PageProps<"/">) {
       <header className="header">
         <div>
           <h1>서울 아파트 매매 실거래가</h1>
-          <p>국토교통부 실거래가 공개 데이터 · {getSnapshotTime() ? "정기 스냅샷" : "매일 06:00 갱신"} · 취소·일괄 매각 제외</p>
+          <p>국토교통부 실거래가 공개 데이터 · {refreshLabel} · 취소·일괄 매각 제외</p>
         </div>
         <ThemeToggle />
       </header>
@@ -48,7 +48,7 @@ async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
   const region = sp.region && (known.has(sp.region) || known.size === 0) ? sp.region : DEFAULT_REGION;
 
   // 선택 구의 추이·표는 서로 독립이라 동시에 보낸다
-  const [trend, prices] = await Promise.all([getTrend(region, months), getPrices(region, page)]);
+  const [trend, prices, snapshotTime] = await Promise.all([getTrend(region, months), getPrices(region, page), getSnapshotTime()]);
 
   // 링크는 현재 선택(구·기간)을 유지한다. 구나 기간을 바꾸면 표 페이지는 처음으로.
   const href = (q: { region?: string; months?: number; page?: number }) => {
@@ -92,7 +92,7 @@ async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
       </div>
 
       <h2 className="region-title">{trend.sggNm}</h2>
-      <SnapshotNote />
+      <SnapshotNote time={snapshotTime} />
 
       <StatTiles points={trend.points} />
 
@@ -128,12 +128,11 @@ async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
   );
 }
 
-// 정적 배포(DATA_SOURCE=static)에서는 데이터가 언제 기준인지 알려 준다.
-function SnapshotNote() {
-  const t = getSnapshotTime();
-  if (!t) return null;
-  const kst = new Date(t).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
-  return <p className="note" style={{ margin: "0 0 8px" }}>데이터 기준: {kst} (정적 스냅샷)</p>;
+// 배포(DATA_SOURCE=static)에서는 데이터가 언제 기준인지 알려 준다.
+function SnapshotNote({ time }: { time: string | null }) {
+  if (!time) return null;
+  const kst = new Date(time).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
+  return <p className="note" style={{ margin: "0 0 8px" }}>데이터 기준: {kst}</p>;
 }
 
 function parseMonths(raw: string | undefined): number {

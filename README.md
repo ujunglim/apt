@@ -228,28 +228,33 @@ cd frontend && npm install && npm run dev   # http://localhost:3000 (backend 실
 - 진행 중인 달은 표본이 적어 가격 차트에서 제외하고, 거래 건수와 표에서만 `집계 중`으로 표시합니다.
 - 라이트·다크 모드, 모바일 폭(390px) 대응
 
-## 배포 (Vercel, 정적 스냅샷)
+## 배포 (Vercel + Vercel Blob)
 
-공개 사이트는 **대시보드만** Vercel에 올립니다. 백엔드·DB·Airflow는 로컬에서 돌고, 대시보드가 쓰는 집계 데이터만 JSON 스냅샷으로 함께 배포합니다.
+공개 사이트는 **대시보드만** Vercel에 올립니다. 백엔드·DB·Airflow는 로컬에서 돌고, 대시보드가 쓰는 집계 데이터만 JSON 파일 하나로 Vercel Blob(파일 보관함)에 올립니다. 사이트는 요청 때마다 그 파일을 읽으므로 **git push·재배포 없이** 매일 최신 데이터가 반영됩니다.
 
 ```
-[로컬] Airflow 일 배치 → Postgres(api 뷰) → scripts/export_dashboard_data.py → frontend/data/dashboard.json → git push
-[Vercel] push 감지 → 자동 빌드·배포 (DATA_SOURCE=static 이라 BE 대신 JSON 을 읽음)
+[로컬] Airflow 일 배치 → Postgres(api 뷰) → publish_dashboard (scripts/export_dashboard_data.py --upload)
+                                              ↓ dashboard.json 덮어쓰기 (집계값이 바뀐 날만)
+[Vercel Blob] https://<store>.public.blob.vercel-storage.com/dashboard.json
+                                              ↑ 요청마다 읽음 (CDN 캐시 최대 60초)
+[Vercel] 대시보드 (DATA_SOURCE=static, DASHBOARD_DATA_URL=위 주소)
 ```
 
-- 스냅샷에는 시군구 × 월 집계값과 최근 완결 월 순위만 담습니다 (공개 데이터 집계, 개별 거래·개인정보 없음, 약 13KB).
-- 데이터 출처 전환: `DATA_SOURCE=static`(JSON) / 미설정(`api`, 로컬 BE 호출). 코드는 같고 환경변수만 다릅니다.
+- 파일에는 시군구 × 월 집계값과 최근 완결 월 순위만 담습니다 (공개 데이터 집계, 개별 거래·개인정보 없음, 약 13KB). 공개 URL로 둡니다.
+- 데이터 출처 전환: `DATA_SOURCE=static` + `DASHBOARD_DATA_URL`(Blob) / `DATA_SOURCE=static`만(저장소의 `frontend/data/dashboard.json`) / 미설정(`api`, 로컬 BE 호출).
+- `BLOB_READ_WRITE_TOKEN`이 없으면 `publish_dashboard`는 실패가 아니라 '건너뜀'으로 끝납니다.
+- Airflow는 노트북(Colima)이 켜져 있어야 돌기 때문에, 꺼져 있던 날은 다음 실행 때 반영됩니다.
 
 **처음 연결**
 1. Vercel에 GitHub 계정으로 로그인 → *Add New → Project* → 이 저장소 import
 2. **Root Directory**: `frontend` (Framework는 Next.js로 자동 인식)
-3. **Environment Variables**: `DATA_SOURCE` = `static`
-4. Deploy
+3. Vercel 프로젝트 → *Storage* → Blob 스토어 생성(Public) → 토큰 `BLOB_READ_WRITE_TOKEN`을 로컬 `.env`에 추가
+4. `docker-compose up -d airflow` (토큰 반영) → Airflow에서 DAG 실행 → `publish_dashboard` 로그의 업로드 URL 확인
+5. **Environment Variables**: `DATA_SOURCE` = `static`, `DASHBOARD_DATA_URL` = 4의 URL → Redeploy (이후로는 재배포 불필요)
 
-**데이터 갱신**
+**수동 업로드** (Airflow 없이)
 ```bash
-.venv/bin/python scripts/export_dashboard_data.py   # api 뷰 → frontend/data/dashboard.json
-git add frontend/data/dashboard.json && git commit -m "대시보드 데이터 갱신" && git push
+.venv/bin/python scripts/export_dashboard_data.py --upload   # api 뷰 → Vercel Blob
 ```
 
 ## 진행 상황
@@ -270,7 +275,7 @@ git add frontend/data/dashboard.json && git commit -m "대시보드 데이터 �
   - [x] 테스트: 단위·웹 계층 12개, 실제 DB 통합 4개
   - [ ] API 전용 읽기 전용 DB 계정 (현재는 파이프라인과 같은 계정 사용)
 - [x] **FE**: Next.js + TypeScript 대시보드 (차트, 표, 지역·기간 필터, 다크 모드)
-- [x] **배포**: Vercel (정적 스냅샷 방식)
+- [x] **배포**: Vercel + Vercel Blob (Airflow가 매일 데이터 파일 갱신, 재배포 불필요)
 
 ## 데이터 출처
 

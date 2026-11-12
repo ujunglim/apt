@@ -1,6 +1,9 @@
 """아파트 매매 실거래가 일 배치.
 
-수집(API -> raw) -> raw 점검 -> staging -> 매핑 -> 마트 -> 마트 점검 -> API 뷰
+수집(API -> raw) -> raw 점검 -> staging -> 매핑 -> 마트 -> 마트 점검 -> API 뷰 -> 대시보드 데이터 게시
+
+- 마지막 단계는 API 뷰 집계값을 Vercel Blob 의 dashboard.json 으로 올린다. 배포된 대시보드가 이 파일을 읽으므로
+  git push 없이 반영된다. 집계값이 바뀌지 않았으면 올리지 않고, 토큰이 없으면 '건너뜀'으로 끝난다.
 
 - 매일 06:00(서울)에 실행되며, 수집 스크립트가 최근 N개월(기본 3)을 월 단위로 다시 받아 덮어쓴다.
   신고가 최대 30일 늦게 들어오고 취소·등기일자가 나중에 갱신되기 때문이다.
@@ -25,6 +28,7 @@ log = logging.getLogger(__name__)
 
 SQL_DIR = Path(os.getenv("APT_SQL_DIR", "/opt/airflow/sql"))
 INGEST_SCRIPT = os.getenv("APT_INGEST_SCRIPT", "/opt/airflow/ingest/load_apt_trade.py")
+EXPORT_SCRIPT = os.getenv("APT_EXPORT_SCRIPT", "/opt/airflow/scripts/export_dashboard_data.py")
 LAWD_CODES = [c.strip() for c in os.getenv("APT_LAWD_CODES", "11215").split(",") if c.strip()]
 
 # 월 거래 건수가 직전 완결 월의 이 비율보다 작으면 경고 (신고 지연일 수 있어 실패시키지는 않는다)
@@ -181,4 +185,10 @@ with DAG(
     build_mart = _sql_step("build_mart", "04_mart.sql")
     build_api = _sql_step("build_api", "06_api_views.sql")
 
-    ingest >> check_raw() >> build_stg >> build_map >> build_mart >> check_mart() >> build_api
+    # 종료 코드 99(토큰 미설정)는 BashOperator 기본값에 따라 실패가 아니라 '건너뜀'이 된다.
+    publish_dashboard = BashOperator(
+        task_id="publish_dashboard",
+        bash_command=f"{sys.executable} {EXPORT_SCRIPT} --upload",
+    )
+
+    ingest >> check_raw() >> build_stg >> build_map >> build_mart >> check_mart() >> build_api >> publish_dashboard
