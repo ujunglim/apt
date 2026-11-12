@@ -93,13 +93,13 @@ export default function TrendChart({ points: all }: { points: TrendPoint[] }) {
   );
 }
 
-/** 눈금을 0.5억 또는 1억 단위로 딱 떨어지게 만든다 (값 범위가 3억을 넘으면 1억 단위). */
+/** 눈금을 0.5억·1억·2억·5억·10억 중 하나로 딱 떨어지게, 6개 안팎이 되도록 만든다. */
 function niceTicks(points: TrendPoint[]): number[] {
   const values = points.flatMap((p) => SERIES.map((s) => p[s.key])).filter((v): v is number => v != null);
   if (values.length === 0) return [0, 10000];
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const step = max - min > 30000 ? 10000 : 5000;
+  const step = [5000, 10000, 20000, 50000, 100000].find((s) => (max - min) / s <= 5) ?? 100000;
   const lo = Math.floor(min / step) * step;
   const hi = Math.ceil(max / step) * step;
   const ticks: number[] = [];

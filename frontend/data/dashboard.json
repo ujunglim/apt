@@ -1,0 +1,603 @@
+{
+ "generatedAt": "2026-11-12T08:06:47+00:00",
+ "regions": {
+  "11170": {
+   "sggCd": "11170",
+   "sggNm": "용산구",
+   "months": [
+    {
+     "ym": "2025-12",
+     "tradeCnt": 63,
+     "avgPriceMan": 194860,
+     "medianPriceMan": 173000,
+     "avgPricePerM2Man": 2311.4,
+     "momChangePct": null,
+     "ma3AvgPriceMan": 194860,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-01",
+     "tradeCnt": 82,
+     "avgPriceMan": 240067,
+     "medianPriceMan": 196000,
+     "avgPricePerM2Man": 2459.7,
+     "momChangePct": 23.2,
+     "ma3AvgPriceMan": 217464,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-02",
+     "tradeCnt": 92,
+     "avgPriceMan": 231998,
+     "medianPriceMan": 205000,
+     "avgPricePerM2Man": 2546.3,
+     "momChangePct": -3.36,
+     "ma3AvgPriceMan": 222308,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-03",
+     "tradeCnt": 76,
+     "avgPriceMan": 241697,
+     "medianPriceMan": 220500,
+     "avgPricePerM2Man": 2526.3,
+     "momChangePct": 4.18,
+     "ma3AvgPriceMan": 237921,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-04",
+     "tradeCnt": 139,
+     "avgPriceMan": 233539,
+     "medianPriceMan": 206000,
+     "avgPricePerM2Man": 2521.1,
+     "momChangePct": -3.38,
+     "ma3AvgPriceMan": 235745,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-05",
+     "tradeCnt": 163,
+     "avgPriceMan": 240940,
+     "medianPriceMan": 208000,
+     "avgPricePerM2Man": 2490.9,
+     "momChangePct": 3.17,
+     "ma3AvgPriceMan": 238725,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-06",
+     "tradeCnt": 64,
+     "avgPriceMan": 252646,
+     "medianPriceMan": 204500,
+     "avgPricePerM2Man": 2654.0,
+     "momChangePct": 4.86,
+     "ma3AvgPriceMan": 242375,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-07",
+     "tradeCnt": 69,
+     "avgPriceMan": 250478,
+     "medianPriceMan": 210000,
+     "avgPricePerM2Man": 2671.4,
+     "momChangePct": -0.86,
+     "ma3AvgPriceMan": 248021,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-08",
+     "tradeCnt": 44,
+     "avgPriceMan": 311993,
+     "medianPriceMan": 188500,
+     "avgPricePerM2Man": 2777.6,
+     "momChangePct": 24.56,
+     "ma3AvgPriceMan": 271706,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-09",
+     "tradeCnt": 42,
+     "avgPriceMan": 233307,
+     "medianPriceMan": 217000,
+     "avgPricePerM2Man": 2487.1,
+     "momChangePct": -25.22,
+     "ma3AvgPriceMan": 265259,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-10",
+     "tradeCnt": 35,
+     "avgPriceMan": 342929,
+     "medianPriceMan": 218000,
+     "avgPricePerM2Man": 3121.4,
+     "momChangePct": 46.99,
+     "ma3AvgPriceMan": 296076,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-11",
+     "tradeCnt": 1,
+     "avgPriceMan": 205000,
+     "medianPriceMan": 205000,
+     "avgPricePerM2Man": 2412.3,
+     "momChangePct": -40.22,
+     "ma3AvgPriceMan": 260412,
+     "currentMonth": true,
+     "bulkCnt": 0
+    }
+   ]
+  },
+  "11215": {
+   "sggCd": "11215",
+   "sggNm": "광진구",
+   "months": [
+    {
+     "ym": "2025-12",
+     "tradeCnt": 65,
+     "avgPriceMan": 139354,
+     "medianPriceMan": 159000,
+     "avgPricePerM2Man": 1889.4,
+     "momChangePct": null,
+     "ma3AvgPriceMan": 139354,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-01",
+     "tradeCnt": 64,
+     "avgPriceMan": 142364,
+     "medianPriceMan": 154000,
+     "avgPricePerM2Man": 1856.6,
+     "momChangePct": 2.16,
+     "ma3AvgPriceMan": 140859,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-02",
+     "tradeCnt": 77,
+     "avgPriceMan": 140132,
+     "medianPriceMan": 148000,
+     "avgPricePerM2Man": 1854.6,
+     "momChangePct": -1.57,
+     "ma3AvgPriceMan": 140617,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-03",
+     "tradeCnt": 54,
+     "avgPriceMan": 137200,
+     "medianPriceMan": 131250,
+     "avgPricePerM2Man": 1826.9,
+     "momChangePct": -2.09,
+     "ma3AvgPriceMan": 139899,
+     "currentMonth": false,
+     "bulkCnt": 7
+    },
+    {
+     "ym": "2026-04",
+     "tradeCnt": 121,
+     "avgPriceMan": 142597,
+     "medianPriceMan": 149000,
+     "avgPricePerM2Man": 1897.1,
+     "momChangePct": 3.93,
+     "ma3AvgPriceMan": 139976,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-05",
+     "tradeCnt": 143,
+     "avgPriceMan": 164660,
+     "medianPriceMan": 169000,
+     "avgPricePerM2Man": 2088.2,
+     "momChangePct": 15.47,
+     "ma3AvgPriceMan": 148152,
+     "currentMonth": false,
+     "bulkCnt": 55
+    },
+    {
+     "ym": "2026-06",
+     "tradeCnt": 75,
+     "avgPriceMan": 143011,
+     "medianPriceMan": 138000,
+     "avgPricePerM2Man": 1868.4,
+     "momChangePct": -13.15,
+     "ma3AvgPriceMan": 150089,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-07",
+     "tradeCnt": 77,
+     "avgPriceMan": 150218,
+     "medianPriceMan": 149000,
+     "avgPricePerM2Man": 1932.7,
+     "momChangePct": 5.04,
+     "ma3AvgPriceMan": 152630,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-08",
+     "tradeCnt": 50,
+     "avgPriceMan": 132733,
+     "medianPriceMan": 135000,
+     "avgPricePerM2Man": 1763.2,
+     "momChangePct": -11.64,
+     "ma3AvgPriceMan": 141987,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-09",
+     "tradeCnt": 46,
+     "avgPriceMan": 151167,
+     "medianPriceMan": 158500,
+     "avgPricePerM2Man": 1899.7,
+     "momChangePct": 13.89,
+     "ma3AvgPriceMan": 144706,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-10",
+     "tradeCnt": 42,
+     "avgPriceMan": 155717,
+     "medianPriceMan": 158500,
+     "avgPricePerM2Man": 2182.6,
+     "momChangePct": 3.01,
+     "ma3AvgPriceMan": 146539,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-11",
+     "tradeCnt": 4,
+     "avgPriceMan": 102550,
+     "medianPriceMan": 115600,
+     "avgPricePerM2Man": 1641.2,
+     "momChangePct": -34.14,
+     "ma3AvgPriceMan": 136478,
+     "currentMonth": true,
+     "bulkCnt": 0
+    }
+   ]
+  },
+  "11230": {
+   "sggCd": "11230",
+   "sggNm": "동대문구",
+   "months": [
+    {
+     "ym": "2025-12",
+     "tradeCnt": 202,
+     "avgPriceMan": 97737,
+     "medianPriceMan": 90250,
+     "avgPricePerM2Man": 1258.7,
+     "momChangePct": null,
+     "ma3AvgPriceMan": 97737,
+     "currentMonth": false,
+     "bulkCnt": 73
+    },
+    {
+     "ym": "2026-01",
+     "tradeCnt": 293,
+     "avgPriceMan": 97822,
+     "medianPriceMan": 93000,
+     "avgPricePerM2Man": 1317.4,
+     "momChangePct": 0.09,
+     "ma3AvgPriceMan": 97780,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-02",
+     "tradeCnt": 232,
+     "avgPriceMan": 100760,
+     "medianPriceMan": 96250,
+     "avgPricePerM2Man": 1351.2,
+     "momChangePct": 3.0,
+     "ma3AvgPriceMan": 98773,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-03",
+     "tradeCnt": 215,
+     "avgPriceMan": 98320,
+     "medianPriceMan": 96000,
+     "avgPricePerM2Man": 1326.9,
+     "momChangePct": -2.42,
+     "ma3AvgPriceMan": 98967,
+     "currentMonth": false,
+     "bulkCnt": 20
+    },
+    {
+     "ym": "2026-04",
+     "tradeCnt": 372,
+     "avgPriceMan": 98129,
+     "medianPriceMan": 95000,
+     "avgPricePerM2Man": 1353.5,
+     "momChangePct": -0.19,
+     "ma3AvgPriceMan": 99070,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-05",
+     "tradeCnt": 346,
+     "avgPriceMan": 102290,
+     "medianPriceMan": 99000,
+     "avgPricePerM2Man": 1402.7,
+     "momChangePct": 4.24,
+     "ma3AvgPriceMan": 99580,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-06",
+     "tradeCnt": 243,
+     "avgPriceMan": 108596,
+     "medianPriceMan": 105000,
+     "avgPricePerM2Man": 1456.4,
+     "momChangePct": 6.16,
+     "ma3AvgPriceMan": 103005,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-07",
+     "tradeCnt": 221,
+     "avgPriceMan": 110358,
+     "medianPriceMan": 107000,
+     "avgPricePerM2Man": 1510.8,
+     "momChangePct": 1.62,
+     "ma3AvgPriceMan": 107081,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-08",
+     "tradeCnt": 139,
+     "avgPriceMan": 104919,
+     "medianPriceMan": 105500,
+     "avgPricePerM2Man": 1424.7,
+     "momChangePct": -4.93,
+     "ma3AvgPriceMan": 107958,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-09",
+     "tradeCnt": 114,
+     "avgPriceMan": 97754,
+     "medianPriceMan": 96100,
+     "avgPricePerM2Man": 1377.8,
+     "momChangePct": -6.83,
+     "ma3AvgPriceMan": 104344,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-10",
+     "tradeCnt": 135,
+     "avgPriceMan": 97891,
+     "medianPriceMan": 99000,
+     "avgPricePerM2Man": 1403.4,
+     "momChangePct": 0.14,
+     "ma3AvgPriceMan": 100188,
+     "currentMonth": false,
+     "bulkCnt": 313
+    },
+    {
+     "ym": "2026-11",
+     "tradeCnt": 17,
+     "avgPriceMan": 105582,
+     "medianPriceMan": 98000,
+     "avgPricePerM2Man": 1421.7,
+     "momChangePct": 7.86,
+     "ma3AvgPriceMan": 100409,
+     "currentMonth": true,
+     "bulkCnt": 0
+    }
+   ]
+  },
+  "11710": {
+   "sggCd": "11710",
+   "sggNm": "송파구",
+   "months": [
+    {
+     "ym": "2025-12",
+     "tradeCnt": 309,
+     "avgPriceMan": 182799,
+     "medianPriceMan": 155000,
+     "avgPricePerM2Man": 2377.6,
+     "momChangePct": null,
+     "ma3AvgPriceMan": 182799,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-01",
+     "tradeCnt": 341,
+     "avgPriceMan": 192653,
+     "medianPriceMan": 169000,
+     "avgPricePerM2Man": 2528.2,
+     "momChangePct": 5.39,
+     "ma3AvgPriceMan": 187726,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-02",
+     "tradeCnt": 283,
+     "avgPriceMan": 194400,
+     "medianPriceMan": 178800,
+     "avgPricePerM2Man": 2465.2,
+     "momChangePct": 0.91,
+     "ma3AvgPriceMan": 189951,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-03",
+     "tradeCnt": 274,
+     "avgPriceMan": 185243,
+     "medianPriceMan": 156250,
+     "avgPricePerM2Man": 2532.8,
+     "momChangePct": -4.71,
+     "ma3AvgPriceMan": 190765,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-04",
+     "tradeCnt": 604,
+     "avgPriceMan": 207539,
+     "medianPriceMan": 199500,
+     "avgPricePerM2Man": 2821.2,
+     "momChangePct": 12.04,
+     "ma3AvgPriceMan": 195727,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-05",
+     "tradeCnt": 606,
+     "avgPriceMan": 216215,
+     "medianPriceMan": 203750,
+     "avgPricePerM2Man": 2650.8,
+     "momChangePct": 4.18,
+     "ma3AvgPriceMan": 202999,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-06",
+     "tradeCnt": 282,
+     "avgPriceMan": 201840,
+     "medianPriceMan": 181000,
+     "avgPricePerM2Man": 2646.3,
+     "momChangePct": -6.65,
+     "ma3AvgPriceMan": 208531,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-07",
+     "tradeCnt": 313,
+     "avgPriceMan": 226314,
+     "medianPriceMan": 207000,
+     "avgPricePerM2Man": 2859.7,
+     "momChangePct": 12.13,
+     "ma3AvgPriceMan": 214790,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-08",
+     "tradeCnt": 173,
+     "avgPriceMan": 204850,
+     "medianPriceMan": 192500,
+     "avgPricePerM2Man": 2676.2,
+     "momChangePct": -9.48,
+     "ma3AvgPriceMan": 211001,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-09",
+     "tradeCnt": 153,
+     "avgPriceMan": 206052,
+     "medianPriceMan": 190000,
+     "avgPricePerM2Man": 2870.7,
+     "momChangePct": 0.59,
+     "ma3AvgPriceMan": 212405,
+     "currentMonth": false,
+     "bulkCnt": 170
+    },
+    {
+     "ym": "2026-10",
+     "tradeCnt": 186,
+     "avgPriceMan": 203098,
+     "medianPriceMan": 192750,
+     "avgPricePerM2Man": 2740.8,
+     "momChangePct": -1.43,
+     "ma3AvgPriceMan": 204667,
+     "currentMonth": false,
+     "bulkCnt": 0
+    },
+    {
+     "ym": "2026-11",
+     "tradeCnt": 15,
+     "avgPriceMan": 163880,
+     "medianPriceMan": 153000,
+     "avgPricePerM2Man": 2583.1,
+     "momChangePct": -19.31,
+     "ma3AvgPriceMan": 191010,
+     "currentMonth": true,
+     "bulkCnt": 0
+    }
+   ]
+  }
+ },
+ "ranking": {
+  "ym": "2026-10",
+  "sort": "AVG_PRICE",
+  "items": [
+   {
+    "rank": 1,
+    "sggCd": "11170",
+    "sggNm": "용산구",
+    "tradeCnt": 35,
+    "avgPriceMan": 342929,
+    "medianPriceMan": 218000,
+    "avgPricePerM2Man": 3121.4,
+    "momChangePct": 46.99
+   },
+   {
+    "rank": 2,
+    "sggCd": "11710",
+    "sggNm": "송파구",
+    "tradeCnt": 186,
+    "avgPriceMan": 203098,
+    "medianPriceMan": 192750,
+    "avgPricePerM2Man": 2740.8,
+    "momChangePct": -1.43
+   },
+   {
+    "rank": 3,
+    "sggCd": "11215",
+    "sggNm": "광진구",
+    "tradeCnt": 42,
+    "avgPriceMan": 155717,
+    "medianPriceMan": 158500,
+    "avgPricePerM2Man": 2182.6,
+    "momChangePct": 3.01
+   },
+   {
+    "rank": 4,
+    "sggCd": "11230",
+    "sggNm": "동대문구",
+    "tradeCnt": 135,
+    "avgPriceMan": 97891,
+    "medianPriceMan": 99000,
+    "avgPricePerM2Man": 1403.4,
+    "momChangePct": 0.14
+   }
+  ]
+ }
+}

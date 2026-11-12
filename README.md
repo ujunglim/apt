@@ -228,6 +228,30 @@ cd frontend && npm install && npm run dev   # http://localhost:3000 (backend 실
 - 진행 중인 달은 표본이 적어 가격 차트에서 제외하고, 거래 건수와 표에서만 `집계 중`으로 표시합니다.
 - 라이트·다크 모드, 모바일 폭(390px) 대응
 
+## 배포 (Vercel, 정적 스냅샷)
+
+공개 사이트는 **대시보드만** Vercel에 올립니다. 백엔드·DB·Airflow는 로컬에서 돌고, 대시보드가 쓰는 집계 데이터만 JSON 스냅샷으로 함께 배포합니다.
+
+```
+[로컬] Airflow 일 배치 → Postgres(api 뷰) → scripts/export_dashboard_data.py → frontend/data/dashboard.json → git push
+[Vercel] push 감지 → 자동 빌드·배포 (DATA_SOURCE=static 이라 BE 대신 JSON 을 읽음)
+```
+
+- 스냅샷에는 시군구 × 월 집계값과 최근 완결 월 순위만 담습니다 (공개 데이터 집계, 개별 거래·개인정보 없음, 약 13KB).
+- 데이터 출처 전환: `DATA_SOURCE=static`(JSON) / 미설정(`api`, 로컬 BE 호출). 코드는 같고 환경변수만 다릅니다.
+
+**처음 연결**
+1. Vercel에 GitHub 계정으로 로그인 → *Add New → Project* → 이 저장소 import
+2. **Root Directory**: `frontend` (Framework는 Next.js로 자동 인식)
+3. **Environment Variables**: `DATA_SOURCE` = `static`
+4. Deploy
+
+**데이터 갱신**
+```bash
+.venv/bin/python scripts/export_dashboard_data.py   # api 뷰 → frontend/data/dashboard.json
+git add frontend/data/dashboard.json && git commit -m "대시보드 데이터 갱신" && git push
+```
+
 ## 진행 상황
 
 - [x] 수집 스크립트 (멱등 적재, 빈 응답 보호, 로그 마스킹)
@@ -245,7 +269,8 @@ cd frontend && npm install && npm run dev   # http://localhost:3000 (backend 실
   - [x] 페이징, Problem Details 예외 처리, Swagger
   - [x] 테스트: 단위·웹 계층 12개, 실제 DB 통합 4개
   - [ ] API 전용 읽기 전용 DB 계정 (현재는 파이프라인과 같은 계정 사용)
-- [x] **FE**: Next.js + TypeScript 대시보드 (차트, 표, 기간 필터, 다크 모드)
+- [x] **FE**: Next.js + TypeScript 대시보드 (차트, 표, 지역·기간 필터, 다크 모드)
+- [x] **배포**: Vercel (정적 스냅샷 방식)
 
 ## 데이터 출처
 
