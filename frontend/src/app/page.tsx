@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import PriceTable from "@/components/PriceTable";
+import RankingChart from "@/components/RankingChart";
 import RankingTable from "@/components/RankingTable";
 import StatTiles from "@/components/StatTiles";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -8,7 +9,7 @@ import TrendChart from "@/components/TrendChart";
 import VolumeChart from "@/components/VolumeChart";
 import { getPrices, getRanking, getTrend } from "@/lib/api";
 
-const SGG_CD = "11215"; // 광진구
+const DEFAULT_REGION = "11215"; // 광진구 (가장 먼저 수집한 구)
 const PERIODS = [
   { months: 6, label: "6개월" },
   { months: 12, label: "1년" },
@@ -16,7 +17,7 @@ const PERIODS = [
 ] as const;
 const DEFAULT_MONTHS = 12;
 
-type Search = { months?: string; page?: string };
+type Search = { region?: string; months?: string; page?: string };
 
 // 헤더는 정적이라 바로 보내고, URL 쿼리(searchParams)를 읽는 대시보드 본문은 요청 시점에 스트리밍한다.
 export default function Page({ searchParams }: PageProps<"/">) {
@@ -24,7 +25,7 @@ export default function Page({ searchParams }: PageProps<"/">) {
     <main className="container">
       <header className="header">
         <div>
-          <h1>광진구 아파트 매매 실거래가</h1>
+          <h1>서울 아파트 매매 실거래가</h1>
           <p>국토교통부 실거래가 공개 데이터 · 매일 06:00 갱신 · 취소·일괄 매각 제외</p>
         </div>
         <ThemeToggle />
@@ -38,36 +39,60 @@ export default function Page({ searchParams }: PageProps<"/">) {
 
 async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
+  // 형식이 틀린 코드는 기본 구로 돌린다. 형식은 맞지만 데이터가 없는 코드는 BE 404 → error.tsx 화면.
+  const region = /^\d{5}$/.test(sp.region ?? "") ? sp.region! : DEFAULT_REGION;
   const months = parseMonths(sp.months);
   const page = Math.max(0, Number.parseInt(sp.page ?? "0", 10) || 0);
 
   // 서로 독립인 호출은 동시에 보낸다
   const [trend, prices, ranking] = await Promise.all([
-    getTrend(SGG_CD, months),
-    getPrices(SGG_CD, page),
+    getTrend(region, months),
+    getPrices(region, page),
     getRanking(),
   ]);
 
-  const href = (q: { months?: number; page?: number }) => {
+  // 링크는 현재 선택(구·기간)을 유지한다. 구나 기간을 바꾸면 표 페이지는 처음으로.
+  const href = (q: { region?: string; months?: number; page?: number }) => {
     const params = new URLSearchParams();
+    const r = q.region ?? region;
     const m = q.months ?? months;
+    if (r !== DEFAULT_REGION) params.set("region", r);
     if (m !== DEFAULT_MONTHS) params.set("months", String(m));
     if (q.page) params.set("page", String(q.page));
     const s = params.toString();
     return s ? `/?${s}` : "/";
   };
 
+  // 구 목록은 순위 API에서 가져온다 (수집 구를 늘리면 화면 코드 수정 없이 나타난다). 이름 가나다순으로 고정.
+  const regions = [...ranking.items].sort((a, b) => a.sggNm.localeCompare(b.sggNm, "ko"));
+  if (!regions.some((r) => r.sggCd === region)) {
+    regions.push({ ...regions[0], sggCd: region, sggNm: trend.sggNm });
+  }
+  const regionHrefs = Object.fromEntries(regions.map((r) => [r.sggCd, href({ region: r.sggCd })]));
+
   return (
     <>
       {/* 필터는 한 줄, 아래 차트 전체에 적용된다 */}
-      <nav className="filters" aria-label="기간">
-        <span className="label">기간</span>
-        {PERIODS.map((p) => (
-          <Link key={p.months} href={href({ months: p.months })} className="chip" aria-current={p.months === months} scroll={false}>
-            {p.label}
-          </Link>
-        ))}
-      </nav>
+      <div className="filters">
+        <nav className="filter-group" aria-label="지역">
+          <span className="label">지역</span>
+          {regions.map((r) => (
+            <Link key={r.sggCd} href={regionHrefs[r.sggCd]} className="chip" aria-current={r.sggCd === region} scroll={false}>
+              {r.sggNm}
+            </Link>
+          ))}
+        </nav>
+        <nav className="filter-group" aria-label="기간">
+          <span className="label">기간</span>
+          {PERIODS.map((p) => (
+            <Link key={p.months} href={href({ months: p.months })} className="chip" aria-current={p.months === months} scroll={false}>
+              {p.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      <h2 className="region-title">{trend.sggNm}</h2>
 
       <StatTiles points={trend.points} />
 
@@ -91,9 +116,12 @@ async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
           <PriceTable data={prices} hrefForPage={(p) => href({ page: p })} />
         </section>
         <section className="card">
-          <h2>시군구 순위</h2>
-          <p className="sub">진행 중인 달을 제외한 최근 완결 월 기준</p>
-          <RankingTable ranking={ranking} />
+          <h2>시군구 평균가 순위</h2>
+          <p className="sub">
+            {ranking.ym ? `${ranking.ym.replace("-", "년 ")}월` : ""} 기준 (진행 중인 달 제외) · 막대나 이름을 누르면 그 구로 이동합니다
+          </p>
+          {ranking.items.length > 0 && <RankingChart items={ranking.items} selected={region} hrefs={regionHrefs} />}
+          <RankingTable ranking={ranking} selected={region} hrefs={regionHrefs} />
         </section>
       </div>
     </>

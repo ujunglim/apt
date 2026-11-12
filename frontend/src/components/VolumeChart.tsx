@@ -19,6 +19,7 @@ import { formatYm, formatYmShort } from "@/lib/format";
 
 export default function VolumeChart({ points }: { points: TrendPoint[] }) {
   const max = Math.max(...points.map((p) => p.tradeCnt));
+  const ticks = countTicks(max);
   return (
     <div style={{ width: "100%", height: 300 }} role="img" aria-label="월별 거래 건수 차트. 같은 값은 아래 표에서 볼 수 있습니다.">
       <ResponsiveContainer>
@@ -38,7 +39,9 @@ export default function VolumeChart({ points }: { points: TrendPoint[] }) {
             tick={{ fill: "var(--text-muted)", fontSize: 12 }}
             tickLine={false}
             axisLine={false}
-            width={32}
+            width={36}
+            ticks={ticks}
+            domain={[0, ticks[ticks.length - 1]]}
           />
           <Tooltip content={(props) => <VolumeTooltip {...props} />} cursor={{ fill: "var(--wash)" }} />
           <Bar
@@ -72,6 +75,14 @@ export default function VolumeChart({ points }: { points: TrendPoint[] }) {
       </ResponsiveContainer>
     </div>
   );
+}
+
+/** 0부터 딱 떨어지는 눈금 4~5개 (예: 0/50/100/150/200, 0/200/400/600/800). */
+function countTicks(max: number): number[] {
+  const steps = [5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+  const step = steps.find((s) => max / s <= 4) ?? 1000;
+  const top = Math.max(step, Math.ceil(max / step) * step);
+  return Array.from({ length: top / step + 1 }, (_, i) => i * step);
 }
 
 function VolumeTooltip({ active, payload, label }: TooltipContentProps) {

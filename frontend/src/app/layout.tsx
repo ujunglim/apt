@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "광진구 아파트 실거래가",
-  description: "국토교통부 실거래가 공개 데이터로 만든 서울 광진구 아파트 매매가 대시보드",
+  title: "서울 아파트 실거래가",
+  description: "국토교통부 실거래가 공개 데이터로 만든 서울 구별 아파트 매매가 대시보드",
 };
 
 // 저장된 테마를 첫 페인트 전에 <html data-theme> 로 적용한다 (새로고침 시 깜빡임 방지).

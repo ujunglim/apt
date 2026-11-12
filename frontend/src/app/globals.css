@@ -15,6 +15,7 @@
   --series-2: #eb6834; /* 3개월 이동평균 */
   --series-3: #1baf7a; /* 중위가 (라이트 대비 2.74:1 → 범례·표로 보완) */
   --critical: #d03b3b;
+  --bar-muted: #c3c2b7; /* 강조하지 않은 막대 (선택되지 않은 구) */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +33,7 @@
     --series-1: #3987e5;
     --series-2: #d95926;
     --series-3: #199e70;
+    --bar-muted: #52514e;
   }
 }
 
@@ -49,6 +51,7 @@
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
+  --bar-muted: #52514e;
 }
 
 * {
@@ -136,6 +139,18 @@ a {
   gap: 8px;
   margin: 24px 0 16px;
   flex-wrap: wrap;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-right: 16px;
+}
+.region-title {
+  margin: 8px 0 4px;
+  font-size: 18px;
+  font-weight: 600;
 }
 .filters .label {
   color: var(--text-secondary);

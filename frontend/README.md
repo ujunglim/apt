@@ -1,4 +1,4 @@
-# frontend — 실거래가 대시보드 (Next.js)
+# frontend — 서울 아파트 실거래가 대시보드 (Next.js)
 
 `backend`(Spring Boot, 8081)의 REST API를 **서버 컴포넌트에서** 호출해 그리는 대시보드입니다.
 브라우저가 BE를 직접 부르지 않으므로 CORS 설정이 필요 없습니다.
@@ -22,7 +22,8 @@ export NODE_EXTRA_CA_CERTS=../certs/ca-bundle.pem
 ## 구성
 
 - `src/app/page.tsx` — 정적 헤더 + `Suspense` 안에서 `searchParams`(기간·페이지)를 읽어 BE 3개 엔드포인트를 동시에 호출
-- `src/components/` — 지표 타일, 가격 추이(라인), 거래 건수(막대), 월별 표, 시군구 순위
+- `src/components/` — 지표 타일, 가격 추이(라인), 거래 건수(막대), 월별 표, 시군구 순위(가로 막대 + 표)
+- 지역(`?region=`)·기간(`?months=`)·표 페이지(`?page=`)는 URL 쿼리로 관리해 링크를 공유할 수 있습니다. 지역 목록은 순위 API에서 받아 수집 구를 늘리면 자동으로 나타납니다.
 - `src/lib/api.ts` — BE 응답 타입과 호출 (`server-only`), Problem Details 의 `detail`을 오류 메시지로 사용
 - `src/app/error.tsx` — BE가 꺼져 있거나 오류일 때의 화면
 
