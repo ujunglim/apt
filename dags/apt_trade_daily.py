@@ -34,9 +34,10 @@ LAWD_CODES = [c.strip() for c in os.getenv("APT_LAWD_CODES", "11215").split(",")
 # 월 거래 건수가 직전 완결 월의 이 비율보다 작으면 경고 (신고 지연일 수 있어 실패시키지는 않는다)
 VOLUME_DROP_WARN_RATIO = 0.5
 
-
+# ---------------- utils ----------------
+# postgres db에 연결
 def _connect():
-    import psycopg2
+    import psycopg2 # 파이썬과 포스트그래 디비를 연결해주는 어뎁터 라이브러리
 
     return psycopg2.connect(
         host=os.getenv("DB_HOST", "localhost"),
@@ -46,7 +47,7 @@ def _connect():
         password=os.environ["POSTGRES_PASSWORD"],
     )
 
-
+# db/sql/ 의 sql 파일 하나를 db에서 실행
 def _run_sql_file(filename: str) -> None:
     """SQL 파일 하나를 통째로 실행한다. 파일 안의 BEGIN/COMMIT 이 그대로 동작하도록 autocommit 으로 연다."""
     sql = (SQL_DIR / filename).read_text(encoding="utf-8")
@@ -56,7 +57,7 @@ def _run_sql_file(filename: str) -> None:
             cur.execute(sql)
     log.info("%s 실행 완료", filename)
 
-
+# 수집 후 점검
 def _check_raw() -> None:
     """수집 결과 점검: 대상 시군구마다 raw 에 데이터가 있어야 한다."""
     with closing(_connect()) as conn, conn.cursor() as cur:
@@ -148,7 +149,7 @@ def _sql_step(task_id: str, filename: str):
 
     return run()
 
-
+# ---------------- DAG 정의 ----------------
 with DAG(
     dag_id="apt_trade_daily",
     description="아파트 매매 실거래가 수집 -> raw -> stg -> map -> mart -> api 뷰",
@@ -180,6 +181,7 @@ with DAG(
     def check_mart() -> None:
         _check_mart()
 
+    # 단계들을 만들고 >> 로 순서 연결
     build_stg = _sql_step("build_stg", "02_stg_apt_trade.sql")
     build_map = _sql_step("build_map", "03_map_tables.sql")
     build_mart = _sql_step("build_mart", "04_mart.sql")

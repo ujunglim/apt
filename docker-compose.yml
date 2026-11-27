@@ -10,7 +10,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       TZ: Asia/Seoul
     ports:
-      - "5433:5432"   # 로컬에 이미 PostgreSQL이 있어도 충돌하지 않게 5433 사용
+      - "5433:5432"   # 맥의 5433으로 들어오면 컨테이너의 5432로 연결
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
@@ -29,7 +29,7 @@ services:
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
     volumes:
-      - airflow-db-data:/var/lib/postgresql/data
+      - airflow-db-data:/var/lib/postgresql/data응
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
       interval: 5s
@@ -42,7 +42,7 @@ services:
     container_name: apt-airflow
     restart: unless-stopped   # Colima(Docker)가 켜지면 자동 시작. docker-compose stop 으로 끈 경우는 제외
     command: ["airflow", "standalone"]
-    depends_on:
+    depends_on:  # db가 아직 켜지지도 않았는데 airflow가 먼저 켜져서 에러 나느 것을 막기 위해
       airflow-db:
         condition: service_healthy
       postgres:

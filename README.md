@@ -28,20 +28,21 @@ apt/
 ├── docker-compose.yml          postgres(데이터 DB, 호스트 5433) / airflow-db(메타DB) / airflow
 ├── .env                        환경변수 (git 제외)
 ├── certs/                      TLS 검사 프록시 환경용 CA 번들 (git 제외)
-├── backend/                    Spring Boot REST API (api 뷰 조회, 포트 8081)
-├── frontend/                   Next.js 대시보드 (포트 3000)
-├── dags/apt_trade_daily.py     일 배치 DAG
-├── ingest/
+│
+├── ① ingest/                   API에서 가져와 raw 테이블에 넣기
 │   ├── load_apt_trade.py       API → raw.apt_trade 적재
 │   └── requirements.txt
-└── db/
-    ├── init/01_raw_apt.sql     raw 테이블 DDL (컨테이너 최초 생성 시 1회 자동 실행)
-    └── sql/
-        ├── 02_stg_apt_trade.sql    stg 뷰
-        ├── 03_map_tables.sql       매핑 테이블
-        ├── 04_mart.sql             마트 3개
-        ├── 05_checks.sql           수동 품질 점검 쿼리
-        └── 06_api_views.sql        API용 뷰 4개
+├── ② db/                       raw → stg → mart SQL
+│   ├── init/01_raw_apt.sql     raw 테이블 DDL (컨테이너 최초 생성 시 1회 자동 실행)
+│   └── sql/
+│       ├── 02_stg_apt_trade.sql    stg 뷰
+│       ├── 03_map_tables.sql       매핑 테이블
+│       ├── 04_mart.sql             마트 3개
+│       ├── 05_checks.sql           수동 품질 점검 쿼리
+│       └── 06_api_views.sql        API용 뷰 4개
+├── ③ dags/apt_trade_daily.py   ①②를 매일 순서대로 실행 (Airflow 일 배치 DAG)
+├── ④ backend/                  조회 API (Spring Boot, api 뷰 조회, 포트 8081)
+└── ⑤ frontend/                 대시보드 (Next.js, 포트 3000)
 ```
 
 ## 데이터 계층
