@@ -42,8 +42,8 @@ CREATE TABLE raw.apt_trade (
     land_leasehold_gbn   TEXT,
 
     -- 적재 메타데이터
-    batch_id             TEXT NOT NULL,
-    ingested_at          TIMESTAMP NOT NULL DEFAULT now()
+    batch_id             TEXT NOT NULL,                    -- 어느 실행에서 들어왔나
+    ingested_at          TIMESTAMP NOT NULL DEFAULT now()  -- 언제 들어왔나
 );
 
-CREATE INDEX ix_apt_trade_req ON raw.apt_trade (lawd_cd, deal_ymd);
+CREATE INDEX idx_apt_trade_req ON raw.apt_trade (lawd_cd, deal_ymd);

@@ -1,4 +1,4 @@
--- staging: raw.apt_trade 를 분석에 쓸 수 있는 타입으로 정리한 뷰
+-- staging: raw.apt_trade 를 분석에 쓸 수 있는 타입으로 정리한 뷰 (raw는 전부 TEXT라서 계산을 할 수 없어서 여기서 숫자와 날짜로 바꿈)
 -- 뷰라서 raw 가 갱신되면 자동으로 최신 상태가 반영된다.
 -- 실행: docker exec -i apt-postgres psql -U apt -d aptdb < db/sql/02_stg_apt_trade.sql
 
@@ -56,5 +56,5 @@ SELECT
         buyer_gbn IN ('법인', '공공기관')
         AND count(*) FILTER (WHERE NOT is_canceled AND buyer_gbn IN ('법인', '공공기관'))
                 OVER (PARTITION BY COALESCE(apt_seq, apt_nm), deal_date) >= 5
-    ) AS is_bulk
+    ) AS is_bulk -- 일괄 매각. 법인이나 공공기관이 같은 단지를 같은 날 5건 이상 산 거래면 true
 FROM typed;

@@ -1,4 +1,5 @@
--- API용 뷰: BE(Spring Boot)가 읽는 계층. 마트 테이블 구조가 바뀌어도 이 뷰만 맞추면 API는 그대로 둘 수 있다.
+-- 백엔드가 읽는 뷰
+-- 마트 테이블 구조가 바뀌어도 이 뷰만 맞추면 API는 그대로 둘 수 있다.
 -- 뷰는 데이터를 저장하지 않으므로 마트가 갱신되면 바로 반영된다. 몇 번을 실행해도 안전하다.
 -- 실행: docker exec -i apt-postgres psql -U apt -d aptdb -v ON_ERROR_STOP=1 < db/sql/06_api_views.sql
 --
@@ -12,7 +13,7 @@ CREATE OR REPLACE VIEW api.v_sgg_price_monthly AS
 SELECT sgg_cd,
        sgg_nm,
        deal_month,
-       to_char(deal_month, 'YYYY-MM') AS ym,
+       to_char(deal_month, 'YYYY-MM') AS ym, -- x축 라벨로 쓰기 좋게 2026-10-01(날짜) → '2026-10'(글자)
        trade_cnt,
        avg_price_man,
        median_price_man,
@@ -63,9 +64,9 @@ FROM mart.apt_price_monthly;
 -- 가장 최근에 "완결된" 달(진행 중인 달 제외)의 시군구 순위 (GET /regions/ranking)
 CREATE OR REPLACE VIEW api.v_sgg_ranking_latest AS
 WITH latest AS (
-    SELECT max(deal_month) AS deal_month
+    SELECT max(deal_month) AS deal_month -- 가장 최근 달
     FROM mart.sgg_price_monthly
-    WHERE NOT is_current_month
+    WHERE NOT is_current_month -- 단 진행중인 이번 달은 제외
 )
 SELECT s.deal_month,
        to_char(s.deal_month, 'YYYY-MM') AS ym,

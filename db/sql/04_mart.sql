@@ -1,3 +1,4 @@
+-- stg의 거래 한 건 한 건을 월별 숫자 요약표로 만듭니다. 대시보드가 보여주는 숫자가 이 표에서 나옵니다.
 -- 마트: stg.apt_trade(+매핑)를 월 단위로 집계한 테이블 3개
 --   mart.sgg_price_monthly  시군구 x 월
 --   mart.umd_price_monthly  법정동 x 월
@@ -9,48 +10,49 @@
 
 CREATE SCHEMA IF NOT EXISTS mart;
 
+-- 빈 테이블 만들기
 CREATE TABLE IF NOT EXISTS mart.sgg_price_monthly (
-                                                      sgg_cd                TEXT    NOT NULL,
-                                                      sgg_nm                TEXT,
-                                                      deal_month            DATE    NOT NULL,   -- 해당 월 1일
-                                                      trade_cnt             INT     NOT NULL,   -- 거래 건수
-                                                      avg_price_man         INT,                -- 평균 거래금액(만원)
-                                                      median_price_man      INT,                -- 중위 거래금액(만원)
-                                                      avg_price_per_m2_man  NUMERIC(10,1),      -- 전용면적 ㎡당 평균 거래금액(만원)
-    mom_change_pct        NUMERIC(6,2),       -- 전월 대비 평균가 변동률(%), 직전 달 데이터가 없으면 NULL
-    ma3_avg_price_man     INT,                -- 월 평균가의 3개월 이동평균(만원)
-    is_current_month      BOOLEAN NOT NULL,   -- 진행 중인 달(신고가 덜 들어와 건수가 적을 수 있음)
-    refreshed_at          TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY (sgg_cd, deal_month)
+        sgg_cd                TEXT    NOT NULL,
+        sgg_nm                TEXT,
+        deal_month            DATE    NOT NULL,   -- 해당 월 1일
+        trade_cnt             INT     NOT NULL,   -- 거래 건수
+        avg_price_man         INT,                -- 평균 거래금액(만원)
+        median_price_man      INT,                -- 중위 거래금액(만원)
+        avg_price_per_m2_man  NUMERIC(10,1),      -- 전용면적 ㎡당 평균 거래금액(만원)
+        mom_change_pct        NUMERIC(6,2),       -- 전월 대비 평균가 변동률(%), 직전 달 데이터가 없으면 NULL
+        ma3_avg_price_man     INT,                -- 월 평균가의 3개월 이동평균(만원)
+        is_current_month      BOOLEAN NOT NULL,   -- 진행 중인 달(신고가 덜 들어와 건수가 적을 수 있음)
+        refreshed_at          TIMESTAMP NOT NULL DEFAULT now(),
+        PRIMARY KEY (sgg_cd, deal_month)
     );
 
 CREATE TABLE IF NOT EXISTS mart.umd_price_monthly (
-                                                      sgg_cd                TEXT    NOT NULL,
-                                                      umd_cd                TEXT    NOT NULL,
-                                                      umd_nm                TEXT,
-                                                      deal_month            DATE    NOT NULL,
-                                                      trade_cnt             INT     NOT NULL,
-                                                      avg_price_man         INT,
-                                                      median_price_man      INT,
-                                                      avg_price_per_m2_man  NUMERIC(10,1),
-    mom_change_pct        NUMERIC(6,2),
-    ma3_avg_price_man     INT,
-    is_current_month      BOOLEAN NOT NULL,
-    refreshed_at          TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY (sgg_cd, umd_cd, deal_month)
+        sgg_cd                TEXT    NOT NULL,
+        umd_cd                TEXT    NOT NULL,
+        umd_nm                TEXT,
+        deal_month            DATE    NOT NULL,
+        trade_cnt             INT     NOT NULL,
+        avg_price_man         INT,
+        median_price_man      INT,
+        avg_price_per_m2_man  NUMERIC(10,1),
+        mom_change_pct        NUMERIC(6,2),
+        ma3_avg_price_man     INT,
+        is_current_month      BOOLEAN NOT NULL,
+        refreshed_at          TIMESTAMP NOT NULL DEFAULT now(),
+        PRIMARY KEY (sgg_cd, umd_cd, deal_month)
     );
 
 CREATE TABLE IF NOT EXISTS mart.apt_price_monthly (
-                                                      sgg_cd                TEXT    NOT NULL,
-                                                      apt_key               TEXT    NOT NULL,   -- 단지 코드(없으면 'NAME:' || 단지명)
-                                                      apt_seq               TEXT,
-                                                      apt_nm_std            TEXT,               -- 매핑 테이블의 표준 단지명
-                                                      umd_nm                TEXT,
-                                                      deal_month            DATE    NOT NULL,
-                                                      trade_cnt             INT     NOT NULL,
-                                                      avg_price_man         INT,
-                                                      max_price_man         INT,
-                                                      avg_price_per_m2_man  NUMERIC(10,1),
+    sgg_cd                TEXT    NOT NULL,
+    apt_key               TEXT    NOT NULL,   -- 단지 코드(없으면 'NAME:' || 단지명)
+    apt_seq               TEXT,
+    apt_nm_std            TEXT,               -- 매핑 테이블의 표준 단지명
+    umd_nm                TEXT,
+    deal_month            DATE    NOT NULL,
+    trade_cnt             INT     NOT NULL,
+    avg_price_man         INT,
+    max_price_man         INT,
+    avg_price_per_m2_man  NUMERIC(10,1),
     rank_by_avg_price     INT,                -- 같은 시군구, 같은 달 안에서 평균가 순위
     rank_by_trade_cnt     INT,                -- 같은 시군구, 같은 달 안에서 거래 건수 순위
     is_current_month      BOOLEAN NOT NULL,
@@ -58,50 +60,55 @@ CREATE TABLE IF NOT EXISTS mart.apt_price_monthly (
     PRIMARY KEY (sgg_cd, apt_key, deal_month)
     );
 
--- 일괄 매각 제외 건수 컬럼 (기존 테이블에도 추가되도록 ALTER 로 둔다)
+-- 나중에 추가한 컬럼. 일괄 매각 제외 건수 컬럼 (기존 테이블에도 추가되도록 ALTER 로 둔다)
 ALTER TABLE mart.sgg_price_monthly ADD COLUMN IF NOT EXISTS bulk_cnt INT NOT NULL DEFAULT 0;
 ALTER TABLE mart.umd_price_monthly ADD COLUMN IF NOT EXISTS bulk_cnt INT NOT NULL DEFAULT 0;
 
-BEGIN;
-
+BEGIN; -- 트랜잭션 시작
+-- 싹 비우고 밑에서 다시 계산해서 채움
 TRUNCATE mart.sgg_price_monthly, mart.umd_price_monthly, mart.apt_price_monthly;
 
+-- WITH base → bulk → agg → win → INSERT
+-- base: 집계할 거래만 고르기 (취소된 거러ㅐ, 일괄매각 제외) 날짜는 그달 1일로
+-- agg: 같은 달끼리 묶어서 계산 group
+-- win: 여러 달끼리 계산 (윈도우 함수)
+-- insert: 마무리 계산 후 저장
 -- 1) 시군구 x 월
 WITH base AS (
     SELECT sgg_cd,
-           date_trunc('month', deal_date)::date AS deal_month,
-        deal_amount_man,
-           excl_use_ar
+            date_trunc('month', deal_date)::date AS deal_month,  -- date_trunc: 날짜를 그달 1일로 맞춤
+            deal_amount_man,
+            excl_use_ar
     FROM stg.apt_trade
     WHERE NOT is_canceled
       AND NOT is_bulk
       AND deal_date IS NOT NULL
       AND sgg_cd IS NOT NULL
 ),
-     bulk AS (
+     bulk AS ( -- bulk: 뺀 일괄 매각 건수 따로 세기
          SELECT sgg_cd, date_trunc('month', deal_date)::date AS deal_month, count(*) AS bulk_cnt
          FROM stg.apt_trade
          WHERE NOT is_canceled AND is_bulk AND deal_date IS NOT NULL AND sgg_cd IS NOT NULL
          GROUP BY 1, 2
      ),
-     agg AS (
+     agg AS ( -- agg: 구×월로 묶어서 계산 (GROUP BY)
          SELECT sgg_cd,
                 deal_month,
                 count(*)                                                              AS trade_cnt,
-                round(avg(deal_amount_man))::int                                      AS avg_price_man,
-             round(percentile_cont(0.5) WITHIN GROUP (ORDER BY deal_amount_man))::int AS median_price_man,
-             round(avg(deal_amount_man / NULLIF(excl_use_ar, 0)), 1)               AS avg_price_per_m2_man
+                round(avg(deal_amount_man))::int                                      AS avg_price_man, -- 평균가
+                round(percentile_cont(0.5) WITHIN GROUP (ORDER BY deal_amount_man))::int AS median_price_man, -- 중위가 (평균가는 비싼 거래 몇건에 영향을 받기 때문)
+                round(avg(deal_amount_man / NULLIF(excl_use_ar, 0)), 1)               AS avg_price_per_m2_man
          FROM base
          GROUP BY sgg_cd, deal_month
      ),
-     win AS (
+     win AS ( -- win: 앞뒤 달과 비교 (윈도우 함수)
          SELECT agg.*,
                 lag(deal_month)    OVER w_ord AS prev_month,
-             lag(avg_price_man) OVER w_ord AS prev_avg,
-             round(avg(avg_price_man) OVER (
-               PARTITION BY sgg_cd ORDER BY deal_month
-               ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
-           ))::int AS ma3_avg_price_man
+                lag(avg_price_man) OVER w_ord AS prev_avg,
+                round(avg(avg_price_man) OVER (
+                   PARTITION BY sgg_cd ORDER BY deal_month
+                   ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+                ))::int AS ma3_avg_price_man
          FROM agg
                   WINDOW w_ord AS (PARTITION BY sgg_cd ORDER BY deal_month)
     )
@@ -241,4 +248,4 @@ SELECT sgg_cd,
     (deal_month = date_trunc('month', current_date)::date)
 FROM agg;
 
-COMMIT;
+COMMIT; -- 한번에 확정

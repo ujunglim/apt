@@ -1,5 +1,5 @@
 """아파트 매매 실거래가 일 배치.
-
+ingest, db 파일들을 대신 돌려줌
 수집(API -> raw) -> raw 점검 -> staging -> 매핑 -> 마트 -> 마트 점검 -> API 뷰 -> 대시보드 데이터 게시
 
 - 마지막 단계는 API 뷰 집계값을 Vercel Blob 의 dashboard.json 으로 올린다. 배포된 대시보드가 이 파일을 읽으므로
@@ -57,7 +57,7 @@ def _run_sql_file(filename: str) -> None:
             cur.execute(sql)
     log.info("%s 실행 완료", filename)
 
-# 수집 후 점검
+# 수집 후 점검 (raw에 데이터가 들어왔나 확인)
 def _check_raw() -> None:
     """수집 결과 점검: 대상 시군구마다 raw 에 데이터가 있어야 한다."""
     with closing(_connect()) as conn, conn.cursor() as cur:
@@ -71,7 +71,7 @@ def _check_raw() -> None:
         raise ValueError(f"raw.apt_trade 에 데이터가 없는 시군구: {empty}")
     log.info("raw 건수: %s", counts)
 
-
+# 건수가 맞나 확인
 def _check_mart() -> None:
     """마트 점검: 건수 대사는 실패, 매핑 누락·건수 급감·일괄 매각 발견은 경고."""
     with closing(_connect()) as conn, conn.cursor() as cur:
@@ -153,10 +153,10 @@ def _sql_step(task_id: str, filename: str):
 with DAG(
     dag_id="apt_trade_daily",
     description="아파트 매매 실거래가 수집 -> raw -> stg -> map -> mart -> api 뷰",
-    schedule="0 6 * * *",
+    schedule="0 6 * * *", # 매일 6시
     start_date=pendulum.datetime(2026, 11, 1, tz="Asia/Seoul"),
-    catchup=False,
-    max_active_runs=1,
+    catchup=False, # 지나간 날짜는 몰아서 실행하지 않음
+    max_active_runs=1, # 동시에 하나만 실행
     params={
         "months": Param(3, type="integer", minimum=1, maximum=60,
                         description="최근 몇 개월을 다시 받을지 (과거 채우기는 12 등으로 올린다)"),
@@ -170,9 +170,10 @@ with DAG(
             bash_command=f"{sys.executable} {INGEST_SCRIPT} --lawd {code} --months "
             + "{{ params.months }}",
         )
-        for code in LAWD_CODES
+        for code in LAWD_CODES  # 구 코드마다 작업을 하나싹 만듦
     ]
 
+    # 점검 작업
     @task
     def check_raw() -> None:
         _check_raw()
@@ -181,13 +182,13 @@ with DAG(
     def check_mart() -> None:
         _check_mart()
 
-    # 단계들을 만들고 >> 로 순서 연결
+    # SQL 작업
     build_stg = _sql_step("build_stg", "02_stg_apt_trade.sql")
     build_map = _sql_step("build_map", "03_map_tables.sql")
     build_mart = _sql_step("build_mart", "04_mart.sql")
     build_api = _sql_step("build_api", "06_api_views.sql")
 
-    # 종료 코드 99(토큰 미설정)는 BashOperator 기본값에 따라 실패가 아니라 '건너뜀'이 된다.
+    # 대시보드 게시
     publish_dashboard = BashOperator(
         task_id="publish_dashboard",
         bash_command=f"{sys.executable} {EXPORT_SCRIPT} --upload",
